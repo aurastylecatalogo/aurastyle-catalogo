@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>AURA Style — Política de Cambios</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FFFFFF;
+  --bg2:#F5EEE6;
+  --bg3:#EDE5DA;
+  --brand:#4A2D1F;
+  --brand2:#6b3f2c;
+  --muted:#9a7a68;
+  --text:#2a1a10;
+  --footer:#3b1f13;
+}
+html{overflow-x:hidden;width:100%}
+body{background:var(--bg);font-family:'Cormorant Garamond',serif;font-weight:400;color:var(--text);font-size:16px;overflow-x:hidden;width:100%}
+
+/* NAV */
+nav{
+  background:#fff;
+  border-bottom:1px solid #e8e0d8;
+  height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;gap:12px;
+}
+.nav-brand{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:var(--brand);letter-spacing:1px;white-space:nowrap;cursor:pointer}
+.nav-brand-spark{font-size:15px;color:var(--brand2);vertical-align:top}
+.nav-brand em{font-style:italic;font-weight:400}
+.nav-back{
+  font-family:'Cormorant Garamond',serif;font-size:15px;letter-spacing:1px;
+  color:var(--brand);cursor:pointer;text-transform:uppercase;white-space:nowrap;
+}
+.nav-back:hover{color:var(--brand2)}
+
+/* BANNER CARRUSEL */
+.banner-wrap{position:relative;width:100%;max-width:1000px;margin:0 auto;overflow:hidden;background:var(--bg2)}
+.banner-track{display:flex;transition:transform .5s ease}
+.banner-slide{width:100%;flex:0 0 100%;aspect-ratio:2.5/1;overflow:hidden;position:relative}
+.banner-slide img{width:100%;height:100%;object-fit:cover;display:block}
+.banner-dots{position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:6px}
+.banner-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.7);border:1.5px solid rgba(74,45,31,.8);cursor:pointer;flex-shrink:0}
+.banner-dot.active{background:var(--brand)}
+
+/* CONTENIDO POLÍTICA */
+.policy-wrap{background:var(--bg2);padding:8px 20px 26px}
+.policy{max-width:1000px;margin:0 auto;background:transparent;padding:8px 20px}
+.policy h1{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--brand);letter-spacing:1px;margin-bottom:12px}
+.policy h2{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;color:var(--text);margin-bottom:14px}
+.policy ol{margin:0 0 12px 22px}
+.policy ol li{font-size:14px;line-height:1.5;color:var(--text);margin-bottom:4px}
+.policy p{font-size:14px;line-height:1.5;color:var(--text)}
+.policy a{color:var(--brand);font-weight:600}
+@media(max-width:480px){
+  .policy{padding:16px 20px}
+  .policy h1{font-size:23px}
+}
+
+/* FOOTER */
+footer{background:var(--footer);color:#c9a87c;text-align:center;padding:20px 20px}
+footer h3{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;letter-spacing:2px;margin-bottom:4px}
+footer p{font-size:10px;letter-spacing:3px;text-transform:uppercase;opacity:.7;margin-bottom:10px}
+footer a{color:#c9a87c;text-decoration:none;font-size:12px;letter-spacing:1px;opacity:.8;display:inline-block;margin:0 8px}
+footer a:hover{opacity:1}
+
+.loading{text-align:center;padding:2rem;color:var(--muted);font-size:13px;letter-spacing:2px}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-brand" onclick="location.href='catalogo.html'">AURA <em>Style</em> <span class="nav-brand-spark">✦</span></span>
+  <span class="nav-back" onclick="location.href='catalogo.html'">‹ Volver al catálogo</span>
+</nav>
+
+<!-- BANNERS -->
+<div class="banner-wrap" id="banner-wrap" style="display:none">
+  <div class="banner-track" id="banner-track"></div>
+  <div class="banner-dots" id="banner-dots"></div>
+</div>
+
+<!-- POLÍTICA -->
+<div class="policy-wrap">
+  <div class="policy">
+    <h1>Cambios de productos</h1>
+    <ol>
+      <li>Podrás realizarlos dentro de los 30 días de efectuada la compra.</li>
+      <li>El producto deberá encontrarse en perfecto estado con su tarjeta y packaging correspondiente.</li>
+      <li>Podrás realizarlo de la misma forma que realizaste la compra.</li>
+      <li>En caso de que el cambio se realice a través de envíos (el costo del mismo quedará a cargo del comprador) luego de recibido el producto nos contactaremos para que elija el nuevo artículo y acordar la entrega.</li>
+    </ol>
+    <p>Ante cualquier duda podés contactarte con nosotros vía WhatsApp o por email.</p>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <h3>AURA Style ✦</h3>
+  <p>Comodidad · Paz · Estilo</p>
+  <a href="https://wa.me/5491178272009" target="_blank">WhatsApp</a>
+  <a href="politica-cambios.html">Política de Cambios</a>
+</footer>
+
+<script>
+const firebaseConfig = {
+  apiKey:"AIzaSyAjIm2QwhaSKR1y6-aYc0_nnxR94Oj1CAY",
+  authDomain:"aura-catalogo.firebaseapp.com",
+  projectId:"aura-catalogo",
+  storageBucket:"aura-catalogo-fotos",
+  messagingSenderId:"918492971619",
+  appId:"1:918492971619:web:3c8a773d67cdcd5e59ae56"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+let banners=[];
+let bannerIdx=0;
+let bannerTimer=null;
+
+async function cargarBanners(){
+  try{
+    const doc=await db.collection('config').doc('banners').get();
+    if(!doc.exists)return;
+    const d=doc.data();
+    banners=[d.banner1,d.banner2,d.banner3].map(u=>(u||'').trim()).filter(Boolean);
+    renderBanners();
+  }catch(e){console.error('Error al cargar banners',e);}
+}
+
+function renderBanners(){
+  const wrap=document.getElementById('banner-wrap');
+  if(!banners.length){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  document.getElementById('banner-track').innerHTML=banners.map(u=>`<div class="banner-slide"><img src="${u}" alt="Promoción AURA Style"/></div>`).join('');
+  document.getElementById('banner-dots').innerHTML=banners.length>1
+    ?banners.map((_,i)=>`<span class="banner-dot${i===0?' active':''}" onclick="bannerGo(${i})"></span>`).join('')
+    :'';
+  bannerIdx=0;
+  updateBannerTrack();
+  if(banners.length>1)startBannerAutoplay();
+  setupBannerSwipe();
+}
+
+function updateBannerTrack(){
+  document.getElementById('banner-track').style.transform=`translateX(-${bannerIdx*100}%)`;
+  document.querySelectorAll('.banner-dot').forEach((d,i)=>d.classList.toggle('active',i===bannerIdx));
+}
+function bannerGo(i){bannerIdx=i;updateBannerTrack();restartBannerAutoplay();}
+function startBannerAutoplay(){
+  clearInterval(bannerTimer);
+  bannerTimer=setInterval(()=>{bannerIdx=(bannerIdx+1)%banners.length;updateBannerTrack();},4500);
+}
+function restartBannerAutoplay(){clearInterval(bannerTimer);if(banners.length>1)startBannerAutoplay();}
+function setupBannerSwipe(){
+  const wrap=document.getElementById('banner-wrap');
+  let startX=0;
+  wrap.ontouchstart=e=>{startX=e.touches[0].clientX;};
+  wrap.ontouchend=e=>{
+    const diff=e.changedTouches[0].clientX-startX;
+    if(Math.abs(diff)>40 && banners.length>1){
+      bannerIdx=diff<0?(bannerIdx+1)%banners.length:(bannerIdx-1+banners.length)%banners.length;
+      updateBannerTrack();
+      restartBannerAutoplay();
+    }
+  };
+}
+
+cargarBanners();
+</script>
+</body>
+</html>
