@@ -183,6 +183,28 @@ input:checked+.tslide:before{transform:translateX(16px)}
     </div>
   </div>
 
+  <!-- FILTROS -->
+  <div class="form-card" style="padding:16px 20px;margin-bottom:18px">
+    <div class="fr2" style="align-items:end">
+      <div class="fr" style="margin-bottom:0">
+        <label>Buscar por Rubro</label>
+        <select id="ffcat" onchange="updateFiltroSubrubro();aplicarFiltros();">
+          <option value="">Todos los rubros</option>
+          <option>Pantalones</option><option>Remeras</option><option>Buzos</option><option>Body</option>
+          <option>Conjuntos</option><option>Jean</option><option>Pijamas</option><option>Camperas</option>
+          <option>Deportivo</option><option>Blazer</option><option>Polleras</option><option>Accesorios</option><option>Blusas</option>
+        </select>
+      </div>
+      <div class="fr" style="margin-bottom:0">
+        <label>Buscar por Subrubro</label>
+        <select id="ffsubrubro" onchange="aplicarFiltros();">
+          <option value="">Todos los subrubros</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm" style="margin-top:12px" onclick="limpiarFiltros()">Limpiar filtros</button>
+  </div>
+
   <!-- LISTA -->
   <div class="lista-hd" id="lista-title">Productos</div>
   <div id="lista"></div>
@@ -341,9 +363,46 @@ async function cargar(){
   $('lista').innerHTML='<div class="empty">Cargando...</div>';
   const snap=await db.collection('productos').orderBy('fecha','desc').get();
   const prods=snap.docs.map(d=>({id:d.id,...d.data()}));
-  $('lista-title').textContent=`Productos (${prods.length})`;
   window._prods=prods;
-  if(!prods.length){$('lista').innerHTML='<div class="empty">No hay productos todavía</div>';return;}
+  if(!prods.length){$('lista-title').textContent='Productos (0)';$('lista').innerHTML='<div class="empty">No hay productos todavía</div>';return;}
+  aplicarFiltros();
+}
+
+function updateFiltroSubrubro(valorActual){
+  const rubro=$('ffcat').value;
+  const sel=$('ffsubrubro');
+  const opciones=SUBRUBROS_MAP[rubro]||[];
+  sel.innerHTML='<option value="">Todos los subrubros</option>'
+    +opciones.map(o=>`<option>${o}</option>`).join('');
+  if(valorActual && opciones.includes(valorActual)){sel.value=valorActual;}
+  else{sel.value='';}
+}
+
+function rubroOSubrubroActivo(){
+  return !!($('ffcat').value || $('ffsubrubro').value);
+}
+
+function limpiarFiltros(){
+  $('ffcat').value='';
+  updateFiltroSubrubro();
+  aplicarFiltros();
+}
+
+function aplicarFiltros(){
+  const rubro=$('ffcat').value;
+  const subrubro=$('ffsubrubro').value;
+  let prods=window._prods||[];
+  if(rubro)prods=prods.filter(p=>p.categoria===rubro);
+  if(subrubro)prods=prods.filter(p=>p.subrubro===subrubro);
+  renderLista(prods);
+}
+
+function renderLista(prods){
+  const total=(window._prods||[]).length;
+  $('lista-title').textContent=rubroOSubrubroActivo()
+    ?`Productos (${prods.length} de ${total})`
+    :`Productos (${total})`;
+  if(!prods.length){$('lista').innerHTML='<div class="empty">No hay productos que coincidan con el filtro</div>';return;}
   $('lista').innerHTML=prods.map(p=>`
     <div class="prod-item">
       <div class="prod-thumb">${p.fotoUrl?`<img src="${p.fotoUrl}" alt="${p.nombre}"/>`:'✦'}</div>
