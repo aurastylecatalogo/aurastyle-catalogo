@@ -175,11 +175,14 @@ nav{
 .tag{font-size:11px;background:var(--bg);color:#2a1a10;border-radius:20px;padding:3px 10px;display:flex;align-items:center;gap:4px}
 .tag-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;border:1px solid rgba(74,45,31,.25)}
 .card-footer{display:flex;align-items:center;justify-content:space-between;padding:8px 12px 12px;background:#EDE5DA}
-.card-price{font-family:'Lato',sans-serif;font-size:19px;font-weight:700;color:#2a1a10;letter-spacing:.3px}
+.card-price{font-family:'Lato',sans-serif;font-size:23px;font-weight:700;color:#2a1a10;letter-spacing:.3px}
 .card-price-old{font-family:'Lato',sans-serif;font-size:14px;color:var(--muted);text-decoration:line-through;margin-left:10px}
 .price-block{display:flex;flex-direction:column;gap:2px}
-.card-cuotas{font-size:10px;color:var(--muted);letter-spacing:.2px}
-.modal-cuotas{font-size:12px;color:var(--muted);letter-spacing:.2px;margin-top:-8px;margin-bottom:16px}
+.card-cuotas{font-family:'Lato',sans-serif;font-size:14px;font-weight:400;color:var(--brand);letter-spacing:.2px;display:block}
+.card-transf{font-family:'Lato',sans-serif;font-size:13px;font-weight:600;color:#2a1a10;letter-spacing:.2px;display:block}
+.modal-cuotas{font-family:'Lato',sans-serif;font-size:17px;font-weight:400;color:var(--brand);letter-spacing:.2px;margin-top:-8px;margin-bottom:4px;display:block}
+.modal-transf{font-family:'Lato',sans-serif;font-size:16px;font-weight:600;color:#2a1a10;letter-spacing:.2px;margin-bottom:16px;display:block}
+.transf-off{font-size:.8em;font-weight:700;background:#2a1a10;color:#fff;border-radius:8px;padding:1px 7px;margin-left:5px;vertical-align:middle}
 .price-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
 .price-off{font-size:10px;font-weight:700;letter-spacing:.5px;background:var(--brand);color:#fff;border-radius:10px;padding:2px 7px;font-family:'Lato',sans-serif}
 .btn-ws{
@@ -190,6 +193,7 @@ nav{
   transition:background .15s;white-space:nowrap;
 }
 .btn-ws:hover{background:var(--brand2)}
+.btn-ws svg{position:relative;top:1px}
 
 /* MODAL */
 .modal-ov{display:none;position:fixed;inset:0;background:rgba(42,26,16,.5);z-index:100;align-items:center;justify-content:center;padding:16px}
@@ -210,9 +214,10 @@ nav{
 .attr-l{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
 .attr-v{font-size:13px;color:var(--text);font-weight:400}
 .modal-price{margin-bottom:16px}
-.modal-price-main{font-family:'Lato',sans-serif;font-size:26px;font-weight:700;color:var(--text)}
+.modal-price-main{font-family:'Lato',sans-serif;font-size:30px;font-weight:700;color:var(--text)}
 .modal-price-old{font-family:'Lato',sans-serif;font-size:17px;color:var(--muted);text-decoration:line-through;margin-left:8px}
 .modal-ws{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;background:var(--brand);color:#fff;border:none;border-radius:4px;font-size:13px;cursor:pointer;font-family:'Cormorant Garamond',serif;transition:background .15s}
+.modal-ws svg{position:relative;top:1px}
 .modal-ws:hover{background:var(--brand2)}
 
 /* GALERÍA MODAL */
@@ -633,6 +638,7 @@ function renderGrid(){
         <div class="price-block">
           ${precioHTML(p,'card-price-old','card-price')}
           ${cuotasTexto(p)?`<span class="card-cuotas">${cuotasTexto(p)}</span>`:''}
+          ${transferenciaHTML(p)?`<span class="card-transf">${transferenciaHTML(p)}</span>`:''}
         </div>
         <button class="btn-ws" onclick="event.stopPropagation();sendWS('${p.id}')">${wsico()} Consultar</button>
       </div>
@@ -700,6 +706,7 @@ function openModal(id){
       </div>
       <div class="modal-price">${precioHTML(p,'modal-price-old','modal-price-main')}</div>
       ${cuotasTexto(p)?`<div class="modal-cuotas">${cuotasTexto(p)}</div>`:''}
+      ${transferenciaHTML(p)?`<div class="modal-transf">${transferenciaHTML(p)}</div>`:''}
       <button class="modal-ws" onclick="sendWS('${p.id}')">${wsico()} Consultar por WhatsApp</button>
     </div>`;
   document.getElementById('modal-ov').classList.add('open');
@@ -734,12 +741,31 @@ ${precio}
 }
 
 function fmtPrecio(p){return '$'+Number(p).toLocaleString('es-AR');}
+function precioEfectivo(p){
+  const a=parseFloat(p.precio)||0;
+  const b=parseFloat(p.precio2)||0;
+  if(!a && !b)return 0;
+  if(!b)return a;
+  return Math.min(a,b);
+}
+function transferenciaHTML(p){
+  if(!p.cuotasHabilitado)return '';
+  const val=parseFloat(p.precioTransferencia)||0;
+  if(!val)return '';
+  const base=precioEfectivo(p);
+  let offHTML='';
+  if(base && val<base){
+    const off=Math.round((1-val/base)*100);
+    offHTML=`<span class="transf-off">-${off}%</span>`;
+  }
+  return `Transf./Efvo: ${fmtPrecio(val)} ${offHTML}`;
+}
 function cuotasTexto(p){
   if(!p.cuotasHabilitado || !p.cuotasCantidad || !p.precio) return '';
   const n=Number(p.cuotasCantidad);
   if(!n) return '';
   const valor=Math.round(Number(p.precio)/n);
-  return `${n} cuotas sin interés de ${fmtPrecio(valor)}`;
+  return `${n} cuotas sin interés ${fmtPrecio(valor)}`;
 }
 function precioHTML(p,claseChica,claseGrande){
   const a=parseFloat(p.precio)||0;

@@ -168,6 +168,11 @@ input:checked+.tslide:before{transform:translateX(16px)}
         <option value="3">3 cuotas</option>
         <option value="6">6 cuotas</option>
       </select>
+      <div class="fr" style="margin-top:12px;margin-bottom:0">
+        <label>Precio transferencia/efectivo ($)</label>
+        <input id="fpreciotransf" type="number" placeholder="0"/>
+        <p class="hint">Se muestra en el catálogo junto con el descuento calculado respecto al precio</p>
+      </div>
     </div>
     <div class="fr2">
       <div class="fr"><label>Orden en catálogo</label><input id="forden" type="number" placeholder="1" min="1"/></div>
@@ -328,7 +333,7 @@ function cancelForm(){editId=null;$('form-card').style.display='none';resetForm(
 function resetForm(){
   ['fname','fmodel','fdesc','fcolor','ftalle','fprecio','fprecio2','fprov'].forEach(id=>$(id).value='');
   $('fcat').value='Pantalones';$('fotoUrl').value='';const pv2=$('iprev');if(pv2){pv2.innerHTML='';pv2.style.display='none';}
-  $('fcuotas').checked=false;$('fcuotasN').value='3';toggleCuotas();
+  $('fcuotas').checked=false;$('fcuotasN').value='3';$('fpreciotransf').value='';toggleCuotas();
   updateSubrubros();
   $('form-title').textContent='Nuevo producto';
   $('btn-guardar').textContent='Publicar en catálogo';editId=null;
@@ -363,6 +368,7 @@ async function guardar(){
       precio2:parseFloat($('fprecio2').value)||0,
       cuotasHabilitado:$('fcuotas').checked,
       cuotasCantidad:$('fcuotas').checked?parseInt($('fcuotasN').value):0,
+      precioTransferencia:$('fcuotas').checked?(parseFloat($('fpreciotransf').value)||0):0,
       orden:parseInt($('forden').value)||99,
       categoria:$('fcat').value,
       subrubro:subrubroVal,
@@ -458,6 +464,7 @@ function editar(id){
   $('fprecio2').value=p.precio2||'';
   $('fcuotas').checked=!!p.cuotasHabilitado;
   $('fcuotasN').value=p.cuotasCantidad||'3';
+  $('fpreciotransf').value=p.precioTransferencia||'';
   toggleCuotas();
   $('fcat').value=p.categoria||'Pantalones';
   updateSubrubros(p.subrubro||'');
