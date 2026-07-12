@@ -116,6 +116,9 @@ nav{
 .tag-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;border:1px solid rgba(74,45,31,.25)}
 .card-footer{display:flex;align-items:center;justify-content:space-between;padding:8px 12px 12px;background:#EDE5DA}
 .card-price{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#2a1a10;letter-spacing:1px}
+.card-price-block{display:flex;flex-direction:column;gap:2px}
+.card-cuotas{font-size:10px;color:var(--muted);letter-spacing:.2px}
+.modal-cuotas{font-size:12px;color:var(--muted);letter-spacing:.2px;margin-bottom:16px}
 .btn-ws{
   display:flex;align-items:center;gap:6px;
   background:var(--brand);color:#fff;border:none;
@@ -141,7 +144,7 @@ nav{
 .attr{background:var(--bg3);padding:10px 12px;border-radius:4px;border:1px solid var(--bg3)}
 .attr-l{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
 .attr-v{font-size:13px;color:var(--text);font-weight:400}
-.modal-price{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:400;color:var(--text);margin-bottom:16px}
+.modal-price{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:400;color:var(--text);margin-bottom:4px}
 .modal-ws{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;background:var(--brand);color:#fff;border:none;border-radius:4px;font-size:13px;cursor:pointer;font-family:'Cormorant Garamond',serif;transition:background .15s}
 .modal-ws:hover{background:var(--brand2)}
 
@@ -350,11 +353,22 @@ function renderGrid(){
         </div>
       </div>
       <div class="card-footer">
-        <span class="card-price">${p.precio?'$'+Number(p.precio).toLocaleString('es-AR'):''}</span>
+        <div class="card-price-block">
+          <span class="card-price">${p.precio?'$'+Number(p.precio).toLocaleString('es-AR'):''}</span>
+          ${cuotasTexto(p)?`<span class="card-cuotas">${cuotasTexto(p)}</span>`:''}
+        </div>
         <button class="btn-ws" onclick="event.stopPropagation();sendWS('${p.id}')">${wsico()} Consultar</button>
       </div>
     </div>`;
   }).join('');
+}
+
+function cuotasTexto(p){
+  if(!p.cuotasHabilitado || !p.cuotasCantidad || !p.precio) return '';
+  const n=Number(p.cuotasCantidad);
+  if(!n) return '';
+  const valor=Math.round(Number(p.precio)/n);
+  return `${n} cuotas sin interés de $${valor.toLocaleString('es-AR')}`;
 }
 
 function cardNav(id,dir){
@@ -415,6 +429,7 @@ function openModal(id){
         <div class="attr"><div class="attr-l">Colores</div><div class="attr-v">${colores.join(', ')||'—'}</div></div>
       </div>
       <div class="modal-price">${p.precio?'$'+Number(p.precio).toLocaleString('es-AR'):''}</div>
+      ${cuotasTexto(p)?`<div class="modal-cuotas">${cuotasTexto(p)}</div>`:''}
       <button class="modal-ws" onclick="sendWS('${p.id}')">${wsico()} Consultar por WhatsApp</button>
     </div>`;
   document.getElementById('modal-ov').classList.add('open');

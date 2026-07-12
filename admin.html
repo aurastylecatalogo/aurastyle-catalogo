@@ -156,6 +156,19 @@ input:checked+.tslide:before{transform:translateX(16px)}
       <div class="fr"><label>Precio ($)</label><input id="fprecio" type="number" placeholder="0"/></div>
       <div class="fr"><label>Precio anterior (opcional, si hay descuento)</label><input id="fprecio2" type="number" placeholder="0"/></div>
     </div>
+    <div class="fr">
+      <label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:13px;cursor:pointer;color:var(--brand)">
+        <input type="checkbox" id="fcuotas" onchange="toggleCuotas()" style="width:auto;accent-color:var(--brand)"/>
+        Habilitar cuotas sin interés
+      </label>
+    </div>
+    <div class="fr" id="fcuotas-wrap" style="display:none">
+      <label>Cantidad de cuotas</label>
+      <select id="fcuotasN">
+        <option value="3">3 cuotas</option>
+        <option value="6">6 cuotas</option>
+      </select>
+    </div>
     <div class="fr2">
       <div class="fr"><label>Orden en catálogo</label><input id="forden" type="number" placeholder="1" min="1"/></div>
       <div class="fr"><label>Rubro</label>
@@ -306,11 +319,16 @@ async function guardarBanners(){
   btn.disabled=false;btn.textContent='Guardar banners';
 }
 
+function toggleCuotas(){
+  $('fcuotas-wrap').style.display=$('fcuotas').checked?'block':'none';
+}
+
 function toggleForm(){const fc=$('form-card');if(fc.style.display==='none'){fc.style.display='block';resetForm();}else{fc.style.display='none';}}
 function cancelForm(){editId=null;$('form-card').style.display='none';resetForm();}
 function resetForm(){
   ['fname','fmodel','fdesc','fcolor','ftalle','fprecio','fprecio2','fprov'].forEach(id=>$(id).value='');
   $('fcat').value='Pantalones';$('fotoUrl').value='';const pv2=$('iprev');if(pv2){pv2.innerHTML='';pv2.style.display='none';}
+  $('fcuotas').checked=false;$('fcuotasN').value='3';toggleCuotas();
   updateSubrubros();
   $('form-title').textContent='Nuevo producto';
   $('btn-guardar').textContent='Publicar en catálogo';editId=null;
@@ -343,6 +361,8 @@ async function guardar(){
       talle:$('ftalle').value.trim(),
       precio:parseFloat($('fprecio').value)||0,
       precio2:parseFloat($('fprecio2').value)||0,
+      cuotasHabilitado:$('fcuotas').checked,
+      cuotasCantidad:$('fcuotas').checked?parseInt($('fcuotasN').value):0,
       orden:parseInt($('forden').value)||99,
       categoria:$('fcat').value,
       subrubro:subrubroVal,
@@ -408,7 +428,7 @@ function renderLista(prods){
       <div class="prod-thumb">${p.fotoUrl?`<img src="${p.fotoUrl}" alt="${p.nombre}"/>`:'✦'}</div>
       <div class="prod-info">
         <div class="prod-name">${p.nombre||'—'}</div>
-        <div class="prod-sub">${p.categoria||''}${p.subrubro?' · '+p.subrubro:''} · ${p.modelo||''} · $${p.precio?Number(p.precio).toLocaleString('es-AR'):0}</div>
+        <div class="prod-sub">${p.categoria||''}${p.subrubro?' · '+p.subrubro:''} · ${p.modelo||''} · $${p.precio?Number(p.precio).toLocaleString('es-AR'):0}${p.cuotasHabilitado&&p.cuotasCantidad?' · '+p.cuotasCantidad+' cuotas':''}</div>
         <div class="prod-sub" style="margin-top:2px">Talles: ${p.talle||'—'} &nbsp;·&nbsp; Colores: ${p.color||'—'}</div>
         <div class="prod-acts">
           <button class="abtn abtn-ed" onclick="editar('${p.id}')">Editar</button>
@@ -436,6 +456,9 @@ function editar(id){
   $('ftalle').value=p.talle||'';
   $('fprecio').value=p.precio||'';
   $('fprecio2').value=p.precio2||'';
+  $('fcuotas').checked=!!p.cuotasHabilitado;
+  $('fcuotasN').value=p.cuotasCantidad||'3';
+  toggleCuotas();
   $('fcat').value=p.categoria||'Pantalones';
   updateSubrubros(p.subrubro||'');
   $('fprov').value=p.proveedor||'';
