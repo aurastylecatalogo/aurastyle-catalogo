@@ -578,6 +578,7 @@ function irInicio(){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function irContacto(){
+  if(typeof fbq!=='undefined')fbq('track','Contact');
   const msg=encodeURIComponent(`Hola AURA Style! ✨\nQuería hacerte una consulta.`);
   window.open(`https://wa.me/${WS}?text=${msg}`,'_blank');
 }
@@ -683,6 +684,7 @@ let galIdx=0;
 function openModal(id){
   const p=productos.find(x=>x.id===id);
   if(!p)return;
+  if(typeof fbq!=='undefined')fbq('track','ViewContent',{content_name:p.nombre,content_ids:[id],content_type:'product',value:parseFloat(p.precio)||0,currency:'ARS'});
   const colores=(p.color||'').split(',').map(c=>c.trim()).filter(Boolean);
   const talles=(p.talle||'').split(',').map(t=>t.trim()).filter(Boolean);
   galFotos=[];
@@ -743,12 +745,14 @@ function galGo(i){
 function closeModal(){document.getElementById('modal-ov').classList.remove('open');document.body.style.overflow='';}
 
 function sendBannerWS(){
+  if(typeof fbq!=='undefined')fbq('track','Contact');
   const msg=encodeURIComponent(`Hola AURA Style! ✨\nVi la promo del catálogo y quiero más info.`);
   window.open(`https://wa.me/${WS}?text=${msg}`,'_blank');
 }
 
 function sendWS(id){
   const p=productos.find(x=>x.id===id);
+  if(typeof fbq!=='undefined')fbq('track','Contact',{content_name:p.nombre,content_ids:[id],content_type:'product'});
   const precio=p.precio?'$'+Number(p.precio).toLocaleString('es-AR'):'';
   const msg=encodeURIComponent(`Hola AURA Style! ✨
 Me interesa:
