@@ -248,10 +248,18 @@ const SUBRUBROS_MAP={
   'Accesorios':['Pañuelos','Bufandones','Cintos'],
 };
 
+function getSubrubrosDisponibles(rubro){
+  const base=SUBRUBROS_MAP[rubro]||[];
+  const usados=(window._prods||[])
+    .filter(p=>(p.categoria||'')===rubro && p.subrubro)
+    .map(p=>p.subrubro.trim());
+  return [...new Set([...base,...usados])];
+}
+
 function updateSubrubros(valorActual){
   const rubro=$('fcat').value;
   const sel=$('fsubrubro');
-  const opciones=SUBRUBROS_MAP[rubro]||[];
+  const opciones=getSubrubrosDisponibles(rubro);
   sel.innerHTML='<option value="">— Sin subrubro —</option>'
     +opciones.map(o=>`<option>${o}</option>`).join('')
     +'<option value="__nuevo__">+ Agregar nuevo subrubro...</option>';
@@ -397,7 +405,7 @@ async function cargar(){
 function updateFiltroSubrubro(valorActual){
   const rubro=$('ffcat').value;
   const sel=$('ffsubrubro');
-  const opciones=SUBRUBROS_MAP[rubro]||[];
+  const opciones=getSubrubrosDisponibles(rubro);
   sel.innerHTML='<option value="">Todos los subrubros</option>'
     +opciones.map(o=>`<option>${o}</option>`).join('');
   if(valorActual && opciones.includes(valorActual)){sel.value=valorActual;}
