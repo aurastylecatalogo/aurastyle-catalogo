@@ -503,6 +503,7 @@ function setupBannerSwipe(){
 
 async function cargarProductos(){
   try{
+    await cargarOrdenCategorias();
     const snap = await db.collection('productos').orderBy('fecha','desc').get();
     productos = snap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.activo!==false);
     renderCats();
@@ -520,12 +521,42 @@ function esc(s){return String(s).replace(/'/g,"\\'");}
 let catsData=[];
 let menuCatActiva=null;
 
+// ORDEN DE RUBROS Y SUBRUBROS: se cargan desde Firestore (config/categorias),
+// lo maneja Flavia desde el panel de admin con flechitas subir/bajar. Si
+// todavía no se guardó ningún orden, o hay un rubro/subrubro nuevo que no
+// está en la lista, esos se acomodan al final por orden alfabético.
+let ordenManualRubros=[];
+let subOrdenGuardado={};
+
+async function cargarOrdenCategorias(){
+  try{
+    const doc=await db.collection('config').doc('categorias').get();
+    if(doc.exists){
+      ordenManualRubros=doc.data().orden||[];
+      subOrdenGuardado=doc.data().subOrden||{};
+    }
+  }catch(e){console.error('Error al cargar orden de categorías',e);}
+}
+
+function ordenarConPrioridad(lista,prioridad){
+  return lista.sort((a,b)=>{
+    const ia=prioridad.indexOf(a);
+    const ib=prioridad.indexOf(b);
+    if(ia!==-1 || ib!==-1){
+      if(ia===-1) return 1;
+      if(ib===-1) return -1;
+      return ia-ib;
+    }
+    return a.localeCompare(b,'es',{sensitivity:'base'});
+  });
+}
+
 function renderCats(){
-  const catsOrdenadas=[...new Set(productos.map(p=>p.categoria||'Otros').filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}));
+  const catsOrdenadas=ordenarConPrioridad([...new Set(productos.map(p=>p.categoria||'Otros').filter(Boolean))],ordenManualRubros);
   const cats=['Todos',...catsOrdenadas];
   catsData=cats.map(c=>({
     name:c,
-    subs:c==='Todos'?[]:[...new Set(productos.filter(p=>(p.categoria||'Otros')===c && p.subrubro).map(p=>p.subrubro.trim()))].sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}))
+    subs:c==='Todos'?[]:ordenarConPrioridad([...new Set(productos.filter(p=>(p.categoria||'Otros')===c && p.subrubro).map(p=>p.subrubro.trim()))],subOrdenGuardado[c]||[])
   }));
   if(menuCatActiva && !catsData.find(c=>c.name===menuCatActiva && c.subs.length)){
     menuCatActiva=null;

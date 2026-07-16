@@ -56,6 +56,13 @@ body{background:var(--bg);color:var(--brand);font-family:'Lato',sans-serif;font-
 .prod-name{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:var(--brand)}
 .prod-sub{font-size:11px;color:var(--muted);letter-spacing:.5px;margin-top:2px}
 .prod-acts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;align-items:center}
+.orden-item{display:flex;align-items:center;gap:12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;margin-bottom:8px}
+.orden-item .orden-num{font-size:11px;color:var(--muted);width:18px}
+.orden-item .orden-nombre{flex:1;font-size:14px}
+.orden-item .orden-btns{display:flex;gap:4px}
+.orden-item button{width:28px;height:28px;border:1px solid var(--border);background:#fff;border-radius:4px;cursor:pointer;font-size:13px;color:var(--brand)}
+.orden-item button:disabled{opacity:.3;cursor:default}
+.orden-item button:not(:disabled):hover{background:var(--bg)}
 .tog-wrap{display:flex;align-items:center;gap:7px;margin-left:auto}
 .tog-label{font-size:10px;color:var(--muted);letter-spacing:1px}
 .tog{position:relative;display:inline-block;width:36px;height:20px}
@@ -95,6 +102,7 @@ input:checked+.tslide:before{transform:translateX(16px)}
     <div class="hd-btns">
       <button class="btn btn-ghost btn-sm" onclick="window.location='catalogo.html'">← Catálogo</button>
       <button class="btn btn-ghost btn-sm" onclick="toggleBanners()">🖼 Banners</button>
+      <button class="btn btn-ghost btn-sm" onclick="toggleOrdenRubros()">↕ Orden de rubros</button>
       <button class="btn btn-solid btn-sm" onclick="toggleForm()">+ Nuevo producto</button>
     </div>
   </div>
@@ -121,6 +129,26 @@ input:checked+.tslide:before{transform:translateX(16px)}
     <div style="display:flex;gap:10px;margin-top:4px">
       <button class="btn btn-ghost" onclick="toggleBanners()">Cerrar</button>
       <button class="btn btn-solid" id="btn-guardar-banners" onclick="guardarBanners()">Guardar banners</button>
+    </div>
+  </div>
+
+  <!-- ORDEN DE RUBROS Y SUBRUBROS -->
+  <div class="form-card" id="orden-card" style="display:none">
+    <h2>Orden de rubros en el catálogo</h2>
+    <p class="hint" style="margin-bottom:14px">Así se van a ver ordenados los rubros en el menú del catálogo. Usá las flechas para mover uno hacia arriba o abajo. Si aparece un rubro nuevo que todavía no ordenaste, se agrega solo al final (por orden alfabético) hasta que lo acomodes.</p>
+    <div id="orden-lista"></div>
+
+    <h2 style="margin-top:26px">Orden de subrubros</h2>
+    <p class="hint" style="margin-bottom:14px">Elegí un rubro para ordenar sus subrubros (el submenú que se abre al lado, ej: dentro de Deportivo, Top / Conjunto / Calzas...).</p>
+    <div class="fr">
+      <label>Rubro</label>
+      <select id="orden-sub-rubro" onchange="cargarOrdenSubrubros()"></select>
+    </div>
+    <div id="orden-sub-lista"></div>
+
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button class="btn btn-ghost" onclick="toggleOrdenRubros()">Cerrar</button>
+      <button class="btn btn-solid" id="btn-guardar-orden" onclick="guardarOrdenRubros()">Guardar orden</button>
     </div>
   </div>
 
@@ -330,6 +358,113 @@ async function guardarBanners(){
     alert('Banners guardados. Ya se actualizaron en el catálogo.');
   }catch(e){console.error(e);alert('Error al guardar: '+e.message);}
   btn.disabled=false;btn.textContent='Guardar banners';
+}
+
+let ordenRubrosActual=[];
+let subOrdenActual={}; // {Rubro: [subrubro1, subrubro2, ...]}
+
+function toggleOrdenRubros(){
+  const oc=$('orden-card');
+  if(oc.style.display==='none'){
+    oc.style.display='block';
+    cargarOrdenRubros();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }else{oc.style.display='none';}
+}
+
+async function cargarOrdenRubros(){
+  $('orden-lista').innerHTML='<div class="empty">Cargando...</div>';
+  try{
+    const doc=await db.collection('config').doc('categorias').get();
+    const d=doc.exists?doc.data():{};
+    const guardado=d.orden||[];
+    subOrdenActual=d.subOrden||{};
+    // rubros que existen hoy en los productos, aunque todavía no se hayan ordenado
+    const usados=[...new Set((window._prods||[]).map(p=>p.categoria).filter(Boolean))];
+    const nuevos=usados.filter(c=>!guardado.includes(c)).sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}));
+    ordenRubrosActual=[...guardado.filter(c=>usados.includes(c)),...nuevos];
+    renderOrdenRubros();
+    poblarSelectSubrubros();
+  }catch(e){console.error(e);$('orden-lista').innerHTML='<div class="empty">Error al cargar.</div>';}
+}
+
+function renderOrdenRubros(){
+  const cont=$('orden-lista');
+  if(!ordenRubrosActual.length){cont.innerHTML='<div class="empty">Todavía no hay rubros cargados.</div>';return;}
+  cont.innerHTML=ordenRubrosActual.map((c,i)=>`
+    <div class="orden-item">
+      <span class="orden-num">${i+1}</span>
+      <span class="orden-nombre">${c}</span>
+      <div class="orden-btns">
+        <button onclick="moverRubro(${i},-1)" ${i===0?'disabled':''}>↑</button>
+        <button onclick="moverRubro(${i},1)" ${i===ordenRubrosActual.length-1?'disabled':''}>↓</button>
+      </div>
+    </div>`).join('');
+}
+
+function moverRubro(i,dir){
+  const j=i+dir;
+  if(j<0||j>=ordenRubrosActual.length)return;
+  [ordenRubrosActual[i],ordenRubrosActual[j]]=[ordenRubrosActual[j],ordenRubrosActual[i]];
+  renderOrdenRubros();
+}
+
+function poblarSelectSubrubros(){
+  const sel=$('orden-sub-rubro');
+  // solo tiene sentido para rubros que tienen subrubros cargados
+  const conSubs=ordenRubrosActual.filter(c=>getSubrubrosDisponibles(c).length>0);
+  if(!conSubs.length){
+    sel.innerHTML='<option value="">— Ningún rubro tiene subrubros —</option>';
+    $('orden-sub-lista').innerHTML='';
+    return;
+  }
+  sel.innerHTML=conSubs.map(c=>`<option value="${c}">${c}</option>`).join('');
+  cargarOrdenSubrubros();
+}
+
+function cargarOrdenSubrubros(){
+  const rubro=$('orden-sub-rubro').value;
+  if(!rubro){$('orden-sub-lista').innerHTML='';return;}
+  const guardado=subOrdenActual[rubro]||[];
+  const disponibles=getSubrubrosDisponibles(rubro);
+  const nuevos=disponibles.filter(s=>!guardado.includes(s)).sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}));
+  subOrdenActual[rubro]=[...guardado.filter(s=>disponibles.includes(s)),...nuevos];
+  renderOrdenSubrubros();
+}
+
+function renderOrdenSubrubros(){
+  const rubro=$('orden-sub-rubro').value;
+  const lista=subOrdenActual[rubro]||[];
+  const cont=$('orden-sub-lista');
+  if(!lista.length){cont.innerHTML='<div class="empty">Este rubro no tiene subrubros.</div>';return;}
+  cont.innerHTML=lista.map((s,i)=>`
+    <div class="orden-item">
+      <span class="orden-num">${i+1}</span>
+      <span class="orden-nombre">${s}</span>
+      <div class="orden-btns">
+        <button onclick="moverSubrubro(${i},-1)" ${i===0?'disabled':''}>↑</button>
+        <button onclick="moverSubrubro(${i},1)" ${i===lista.length-1?'disabled':''}>↓</button>
+      </div>
+    </div>`).join('');
+}
+
+function moverSubrubro(i,dir){
+  const rubro=$('orden-sub-rubro').value;
+  const lista=subOrdenActual[rubro];
+  const j=i+dir;
+  if(j<0||j>=lista.length)return;
+  [lista[i],lista[j]]=[lista[j],lista[i]];
+  renderOrdenSubrubros();
+}
+
+async function guardarOrdenRubros(){
+  const btn=$('btn-guardar-orden');
+  btn.disabled=true;btn.textContent='Guardando...';
+  try{
+    await db.collection('config').doc('categorias').set({orden:ordenRubrosActual,subOrden:subOrdenActual},{merge:true});
+    alert('Orden guardado. Ya se actualizó en el catálogo.');
+  }catch(e){console.error(e);alert('Error al guardar: '+e.message);}
+  btn.disabled=false;btn.textContent='Guardar orden';
 }
 
 function toggleCuotas(){
