@@ -521,10 +521,11 @@ let catsData=[];
 let menuCatActiva=null;
 
 function renderCats(){
-  const cats=['Todos',...new Set(productos.map(p=>p.categoria||'Otros').filter(Boolean))];
+  const catsOrdenadas=[...new Set(productos.map(p=>p.categoria||'Otros').filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}));
+  const cats=['Todos',...catsOrdenadas];
   catsData=cats.map(c=>({
     name:c,
-    subs:c==='Todos'?[]:[...new Set(productos.filter(p=>(p.categoria||'Otros')===c && p.subrubro).map(p=>p.subrubro.trim()))]
+    subs:c==='Todos'?[]:[...new Set(productos.filter(p=>(p.categoria||'Otros')===c && p.subrubro).map(p=>p.subrubro.trim()))].sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}))
   }));
   if(menuCatActiva && !catsData.find(c=>c.name===menuCatActiva && c.subs.length)){
     menuCatActiva=null;
