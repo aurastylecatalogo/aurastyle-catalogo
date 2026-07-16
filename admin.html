@@ -135,11 +135,11 @@ input:checked+.tslide:before{transform:translateX(16px)}
   <!-- ORDEN DE RUBROS Y SUBRUBROS -->
   <div class="form-card" id="orden-card" style="display:none">
     <h2>Orden de rubros en el catálogo</h2>
-    <p class="hint" style="margin-bottom:14px">Así se van a ver ordenados los rubros en el menú del catálogo. Usá las flechas para mover uno hacia arriba o abajo. Si aparece un rubro nuevo que todavía no ordenaste, se agrega solo al final (por orden alfabético) hasta que lo acomodes.</p>
+    <p class="hint" style="margin-bottom:14px">Este orden define en qué secuencia aparecen los productos agrupados cuando alguien mira "Todos" en el catálogo (el menú desplegable siempre se muestra alfabético, esto no lo afecta). Usá las flechas para mover un rubro hacia arriba o abajo. Si aparece un rubro nuevo que todavía no ordenaste, se agrega solo al final (por orden alfabético) hasta que lo acomodes.</p>
     <div id="orden-lista"></div>
 
     <h2 style="margin-top:26px">Orden de subrubros</h2>
-    <p class="hint" style="margin-bottom:14px">Elegí un rubro para ordenar sus subrubros (el submenú que se abre al lado, ej: dentro de Deportivo, Top / Conjunto / Calzas...).</p>
+    <p class="hint" style="margin-bottom:14px">Elegí un rubro para ordenar cómo aparecen sus subrubros agrupados en la grilla (ej: dentro de Deportivo, que primero se vean los Top, después Conjunto, después Calzas...).</p>
     <div class="fr">
       <label>Rubro</label>
       <select id="orden-sub-rubro" onchange="cargarOrdenSubrubros()"></select>

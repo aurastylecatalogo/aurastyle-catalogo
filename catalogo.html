@@ -552,11 +552,11 @@ function ordenarConPrioridad(lista,prioridad){
 }
 
 function renderCats(){
-  const catsOrdenadas=ordenarConPrioridad([...new Set(productos.map(p=>p.categoria||'Otros').filter(Boolean))],ordenManualRubros);
+  const catsOrdenadas=[...new Set(productos.map(p=>p.categoria||'Otros').filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}));
   const cats=['Todos',...catsOrdenadas];
   catsData=cats.map(c=>({
     name:c,
-    subs:c==='Todos'?[]:ordenarConPrioridad([...new Set(productos.filter(p=>(p.categoria||'Otros')===c && p.subrubro).map(p=>p.subrubro.trim()))],subOrdenGuardado[c]||[])
+    subs:c==='Todos'?[]:[...new Set(productos.filter(p=>(p.categoria||'Otros')===c && p.subrubro).map(p=>p.subrubro.trim()))].sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}))
   }));
   if(menuCatActiva && !catsData.find(c=>c.name===menuCatActiva && c.subs.length)){
     menuCatActiva=null;
@@ -643,6 +643,25 @@ function setBusqueda(v){
   updateTopSection();
 }
 
+function ordenarProductosGrid(lista){
+  const catsOrden=ordenarConPrioridad([...new Set(productos.map(p=>p.categoria||'Otros'))],ordenManualRubros);
+  const subsOrdenPorCat={};
+  catsOrden.forEach(c=>{
+    subsOrdenPorCat[c]=ordenarConPrioridad([...new Set(productos.filter(p=>(p.categoria||'Otros')===c && p.subrubro).map(p=>p.subrubro.trim()))],subOrdenGuardado[c]||[]);
+  });
+  return lista.slice().sort((a,b)=>{
+    const ca=a.categoria||'Otros', cb=b.categoria||'Otros';
+    const ia=catsOrden.indexOf(ca), ib=catsOrden.indexOf(cb);
+    if(ia!==ib) return ia-ib;
+    const suba=(a.subrubro||'').trim(), subb=(b.subrubro||'').trim();
+    const subsList=subsOrdenPorCat[ca]||[];
+    const isa=suba?subsList.indexOf(suba):-1;
+    const isb=subb?subsList.indexOf(subb):-1;
+    if(isa!==isb) return isa-isb;
+    return (a.orden||99)-(b.orden||99);
+  });
+}
+
 function renderGrid(){
   let show;
   if(busqueda){
@@ -656,7 +675,7 @@ function renderGrid(){
       show=show.filter(p=>(p.subrubro||'').trim()===subFiltro);
     }
   }
-  show=show.sort((a,b)=>(a.orden||99)-(b.orden||99));
+  show=ordenarProductosGrid(show);
   if(!show.length){
     let msg='No hay productos en esta categoría.';
     if(busqueda) msg='No hay productos que coincidan con tu búsqueda.';
