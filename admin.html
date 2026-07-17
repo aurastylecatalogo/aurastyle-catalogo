@@ -248,6 +248,24 @@ input:checked+.tslide:before{transform:translateX(16px)}
         </select>
       </div>
     </div>
+    <div class="fr2" style="align-items:end;margin-top:12px">
+      <div class="fr" style="margin-bottom:0">
+        <label>En cuotas</label>
+        <select id="ffcuotas" onchange="toggleFiltroCuotasN();aplicarFiltros();">
+          <option value="">Todos</option>
+          <option value="si">En cuotas</option>
+          <option value="no">Sin cuotas</option>
+        </select>
+      </div>
+      <div class="fr" id="ffcuotasN-wrap" style="margin-bottom:0;display:none">
+        <label>Cantidad de cuotas</label>
+        <select id="ffcuotasN" onchange="aplicarFiltros();">
+          <option value="">Cualquier cantidad</option>
+          <option value="3">3 cuotas</option>
+          <option value="6">6 cuotas</option>
+        </select>
+      </div>
+    </div>
     <button class="btn btn-ghost btn-sm" style="margin-top:12px" onclick="limpiarFiltros()">Limpiar filtros</button>
   </div>
 
@@ -548,11 +566,20 @@ function updateFiltroSubrubro(valorActual){
 }
 
 function rubroOSubrubroActivo(){
-  return !!($('ffcat').value || $('ffsubrubro').value);
+  return !!($('ffcat').value || $('ffsubrubro').value || $('ffcuotas').value);
+}
+
+function toggleFiltroCuotasN(){
+  const esSi=$('ffcuotas').value==='si';
+  $('ffcuotasN-wrap').style.display=esSi?'block':'none';
+  if(!esSi)$('ffcuotasN').value='';
 }
 
 function limpiarFiltros(){
   $('ffcat').value='';
+  $('ffcuotas').value='';
+  $('ffcuotasN').value='';
+  toggleFiltroCuotasN();
   updateFiltroSubrubro();
   aplicarFiltros();
 }
@@ -560,9 +587,14 @@ function limpiarFiltros(){
 function aplicarFiltros(){
   const rubro=$('ffcat').value;
   const subrubro=$('ffsubrubro').value;
+  const cuotas=$('ffcuotas').value;
+  const cuotasN=$('ffcuotasN').value;
   let prods=window._prods||[];
   if(rubro)prods=prods.filter(p=>p.categoria===rubro);
   if(subrubro)prods=prods.filter(p=>p.subrubro===subrubro);
+  if(cuotas==='si')prods=prods.filter(p=>!!p.cuotasHabilitado);
+  if(cuotas==='no')prods=prods.filter(p=>!p.cuotasHabilitado);
+  if(cuotas==='si'&&cuotasN)prods=prods.filter(p=>String(p.cuotasCantidad||'')===cuotasN);
   renderLista(prods);
 }
 
