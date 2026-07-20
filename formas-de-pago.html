@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>AURA Style — Formas de Pago</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FFFFFF;
+  --bg2:#F5EEE6;
+  --bg3:#EDE5DA;
+  --brand:#4A2D1F;
+  --brand2:#6b3f2c;
+  --muted:#9a7a68;
+  --text:#2a1a10;
+  --footer:#3b1f13;
+}
+html{overflow-x:hidden;width:100%}
+body{background:var(--bg);font-family:'Cormorant Garamond',serif;font-weight:400;color:var(--text);font-size:16px;overflow-x:hidden;width:100%}
+
+/* NAV */
+nav{
+  background:#fff;
+  border-bottom:1px solid #e8e0d8;
+  height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;gap:12px;
+}
+.nav-brand{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:var(--brand);letter-spacing:1px;white-space:nowrap;cursor:pointer}
+.nav-brand-spark{font-size:15px;color:var(--brand2);vertical-align:top}
+.nav-brand em{font-style:italic;font-weight:400}
+.nav-back{
+  font-family:'Cormorant Garamond',serif;font-size:15px;letter-spacing:1px;
+  color:var(--brand);cursor:pointer;text-transform:uppercase;white-space:nowrap;
+}
+.nav-back:hover{color:var(--brand2)}
+
+/* BANNER CARRUSEL */
+.banner-wrap{position:relative;width:100%;max-width:1000px;margin:0 auto;overflow:hidden;background:var(--bg2)}
+.banner-track{display:flex;transition:transform .5s ease}
+.banner-slide{width:100%;flex:0 0 100%;aspect-ratio:2.5/1;overflow:hidden;position:relative}
+.banner-slide img{width:100%;height:100%;object-fit:cover;display:block}
+.banner-dots{position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:6px}
+.banner-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.7);border:1.5px solid rgba(74,45,31,.8);cursor:pointer;flex-shrink:0}
+.banner-dot.active{background:var(--brand)}
+
+/* CONTENIDO FORMAS DE PAGO */
+.pay-wrap{background:var(--bg2);padding:8px 20px 26px}
+.pay{max-width:700px;margin:0 auto;padding:8px 0}
+.pay h1{
+  font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--brand);
+  letter-spacing:1px;text-align:center;background:var(--bg3);border-radius:14px;
+  padding:16px 12px;margin:8px 0 22px;
+}
+.pay-card{
+  background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;
+  display:flex;align-items:center;gap:16px;
+  box-shadow:0 1px 4px rgba(74,45,31,.08);
+}
+.pay-icon{
+  width:64px;height:64px;border-radius:50%;background:var(--bg3);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.pay-icon svg{width:30px;height:30px;stroke:var(--brand);fill:none;stroke-width:1.6}
+.pay-info h2{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--text);letter-spacing:.5px;margin-bottom:6px}
+.pay-info p{font-size:14px;line-height:1.5;color:var(--muted)}
+@media(max-width:480px){
+  .pay-card{padding:16px;gap:12px}
+  .pay-icon{width:54px;height:54px}
+  .pay-icon svg{width:26px;height:26px}
+  .pay h1{font-size:22px}
+}
+
+/* FOOTER */
+footer{background:var(--footer);color:#c9a87c;text-align:center;padding:20px 20px}
+footer h3{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;letter-spacing:2px;margin-bottom:4px}
+footer p{font-size:10px;letter-spacing:3px;text-transform:uppercase;opacity:.7;margin-bottom:10px}
+footer a{color:#c9a87c;text-decoration:none;font-size:12px;letter-spacing:1px;opacity:.8;display:inline-block;margin:0 8px}
+footer a:hover{opacity:1}
+
+.loading{text-align:center;padding:2rem;color:var(--muted);font-size:13px;letter-spacing:2px}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-brand" onclick="location.href='catalogo.html'">AURA <em>Style</em> <span class="nav-brand-spark">✦</span></span>
+  <span class="nav-back" onclick="location.href='catalogo.html'">‹ Volver al catálogo</span>
+</nav>
+
+<!-- BANNERS -->
+<div class="banner-wrap" id="banner-wrap" style="display:none">
+  <div class="banner-track" id="banner-track"></div>
+  <div class="banner-dots" id="banner-dots"></div>
+</div>
+
+<!-- FORMAS DE PAGO -->
+<div class="pay-wrap">
+  <div class="pay">
+    <h1>Formas de Pago</h1>
+
+    <div class="pay-card">
+      <div class="pay-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 10l9-6 9 6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 10h16v9H4z" stroke-linejoin="round"/><path d="M8 10v9M12 10v9M16 10v9" stroke-linecap="round"/><path d="M3 19h18" stroke-linecap="round"/></svg>
+      </div>
+      <div class="pay-info">
+        <h2>Transferencia bancaria</h2>
+        <p>Te pasamos el CBU al confirmar tu pedido.</p>
+      </div>
+    </div>
+
+    <div class="pay-card">
+      <div class="pay-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 012-2h11a2 2 0 012 2v2h1a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke-linejoin="round"/><circle cx="17" cy="13" r="1.3"/></svg>
+      </div>
+      <div class="pay-info">
+        <h2>Mercado Pago</h2>
+        <p>Dinero en cuenta para todos los productos y cuotas sin interés en productos seleccionados con link de pago.</p>
+      </div>
+    </div>
+
+    <div class="pay-card">
+      <div class="pay-icon">
+        <svg viewBox="0 0 24 24"><rect x="2.5" y="6.5" width="19" height="11" rx="1.5" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.6"/></svg>
+      </div>
+      <div class="pay-info">
+        <h2>Efectivo</h2>
+        <p>Contra entrega.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <h3>AURA Style ✦</h3>
+  <p>Comodidad · Paz · Estilo</p>
+  <a href="https://wa.me/5491178272009" target="_blank">WhatsApp</a>
+  <a href="politica-cambios.html">Política de Cambios</a>
+  <a href="formas-de-pago.html">Formas de Pago</a>
+</footer>
+
+<script>
+const firebaseConfig = {
+  apiKey:"AIzaSyAjIm2QwhaSKR1y6-aYc0_nnxR94Oj1CAY",
+  authDomain:"aura-catalogo.firebaseapp.com",
+  projectId:"aura-catalogo",
+  storageBucket:"aura-catalogo-fotos",
+  messagingSenderId:"918492971619",
+  appId:"1:918492971619:web:3c8a773d67cdcd5e59ae56"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+let banners=[];
+let bannerIdx=0;
+let bannerTimer=null;
+
+async function cargarBanners(){
+  try{
+    const doc=await db.collection('config').doc('banners').get();
+    if(!doc.exists)return;
+    const d=doc.data();
+    banners=[d.banner1,d.banner2,d.banner3].map(u=>(u||'').trim()).filter(Boolean);
+    renderBanners();
+  }catch(e){console.error('Error al cargar banners',e);}
+}
+
+function renderBanners(){
+  const wrap=document.getElementById('banner-wrap');
+  if(!banners.length){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  document.getElementById('banner-track').innerHTML=banners.map(u=>`<div class="banner-slide"><img src="${u}" alt="Promoción AURA Style"/></div>`).join('');
+  document.getElementById('banner-dots').innerHTML=banners.length>1
+    ?banners.map((_,i)=>`<span class="banner-dot${i===0?' active':''}" onclick="bannerGo(${i})"></span>`).join('')
+    :'';
+  bannerIdx=0;
+  updateBannerTrack();
+  if(banners.length>1)startBannerAutoplay();
+  setupBannerSwipe();
+}
+
+function updateBannerTrack(){
+  document.getElementById('banner-track').style.transform=`translateX(-${bannerIdx*100}%)`;
+  document.querySelectorAll('.banner-dot').forEach((d,i)=>d.classList.toggle('active',i===bannerIdx));
+}
+function bannerGo(i){bannerIdx=i;updateBannerTrack();restartBannerAutoplay();}
+function startBannerAutoplay(){
+  clearInterval(bannerTimer);
+  bannerTimer=setInterval(()=>{bannerIdx=(bannerIdx+1)%banners.length;updateBannerTrack();},4500);
+}
+function restartBannerAutoplay(){clearInterval(bannerTimer);if(banners.length>1)startBannerAutoplay();}
+function setupBannerSwipe(){
+  const wrap=document.getElementById('banner-wrap');
+  let startX=0;
+  wrap.ontouchstart=e=>{startX=e.touches[0].clientX;};
+  wrap.ontouchend=e=>{
+    const diff=e.changedTouches[0].clientX-startX;
+    if(Math.abs(diff)>40 && banners.length>1){
+      bannerIdx=diff<0?(bannerIdx+1)%banners.length:(bannerIdx-1+banners.length)%banners.length;
+      updateBannerTrack();
+      restartBannerAutoplay();
+    }
+  };
+}
+
+cargarBanners();
+</script>
+</body>
+</html>
