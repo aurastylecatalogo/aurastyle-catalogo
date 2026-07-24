@@ -126,6 +126,11 @@ input:checked+.tslide:before{transform:translateX(16px)}
       <input id="banner3" placeholder="https://i.ibb.co/....jpg" oninput="previewBanner(3)"/>
       <img id="bprev3" class="prev-img" alt=""/>
     </div>
+    <div class="fr">
+      <label>Banner 4</label>
+      <input id="banner4" placeholder="https://i.ibb.co/....jpg" oninput="previewBanner(4)"/>
+      <img id="bprev4" class="prev-img" alt=""/>
+    </div>
     <div style="display:flex;gap:10px;margin-top:4px">
       <button class="btn btn-ghost" onclick="toggleBanners()">Cerrar</button>
       <button class="btn btn-solid" id="btn-guardar-banners" onclick="guardarBanners()">Guardar banners</button>
@@ -208,7 +213,7 @@ input:checked+.tslide:before{transform:translateX(16px)}
         <select id="fcat" onchange="updateSubrubros()">
           <option>Pantalones</option><option>Remeras</option><option>Buzos</option><option>Body</option><option>Calza larga</option>
           <option>Conjuntos</option><option>Jean</option><option>Pijamas</option><option>Camperas</option>
-          <option>Deportivo</option><option>Blazer</option><option>Polleras</option><option>Accesorios</option><option>Camisas y Blusas</option><option>Polleras</option>
+          <option>Deportivo</option><option>Blazer</option><option>Polleras</option><option>Accesorios</option><option>Camisas y Blusas</option><option>Polleras</option><option>Velas</option>
         </select>
       </div>
     </div>
@@ -238,7 +243,7 @@ input:checked+.tslide:before{transform:translateX(16px)}
           <option value="">Todos los rubros</option>
           <option>Pantalones</option><option>Remeras</option><option>Buzos</option><option>Body</option>
           <option>Conjuntos</option><option>Jean</option><option>Pijamas</option><option>Camperas</option>
-          <option>Deportivo</option><option>Blazer</option><option>Polleras</option><option>Accesorios</option><option>Camisas y Blusas</option><option>Polleras</option>
+          <option>Deportivo</option><option>Blazer</option><option>Polleras</option><option>Accesorios</option><option>Camisas y Blusas</option><option>Polleras</option><option>Velas</option>
         </select>
       </div>
       <div class="fr" style="margin-bottom:0">
@@ -356,7 +361,7 @@ async function cargarBanners(){
   try{
     const doc=await db.collection('config').doc('banners').get();
     const d=doc.exists?doc.data():{};
-    [1,2,3].forEach(n=>{
+    [1,2,3,4].forEach(n=>{
       $('banner'+n).value=d['banner'+n]||'';
       previewBanner(n);
     });
@@ -371,6 +376,7 @@ async function guardarBanners(){
       banner1:$('banner1').value.trim(),
       banner2:$('banner2').value.trim(),
       banner3:$('banner3').value.trim(),
+      banner4:$('banner4').value.trim(),
     };
     await db.collection('config').doc('banners').set(data,{merge:true});
     alert('Banners guardados. Ya se actualizaron en el catálogo.');

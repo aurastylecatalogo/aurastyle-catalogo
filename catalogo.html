@@ -416,7 +416,7 @@ async function cargarBanners(){
     const doc=await db.collection('config').doc('banners').get();
     if(!doc.exists)return;
     const d=doc.data();
-    banners=[d.banner1,d.banner2,d.banner3].map(u=>(u||'').trim()).filter(Boolean);
+    banners=[d.banner1,d.banner2,d.banner3,d.banner4].map(u=>(u||'').trim()).filter(Boolean);
     renderBanners();
   }catch(e){console.error('Error al cargar banners',e);}
 }
