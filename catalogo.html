@@ -706,10 +706,8 @@ function renderGrid(){
         <div class="card-name">${p.nombre||''}</div>
         <div class="card-desc">${p.descripcion||''}</div>
         <div class="card-tags">
-          <div class="tag-label">Colores</div>
-          ${colores.map(c=>`<span class="tag"><span class="tag-dot" style="background:${colorDot(c)}"></span>${c}</span>`).join('')}
-          <div class="tag-label">Talles</div>
-          ${talles.map(t=>`<span class="tag">${t}</span>`).join('')}
+          ${colores.length?`<div class="tag-label">Colores</div>${colores.map(c=>`<span class="tag"><span class="tag-dot" style="background:${colorDot(c)}"></span>${c}</span>`).join('')}`:''}
+          ${talles.length?`<div class="tag-label">Talles</div>${talles.map(t=>`<span class="tag">${t}</span>`).join('')}`:''}
         </div>
       </div>
       <div class="card-footer">
@@ -780,8 +778,8 @@ function openModal(id){
       <div class="modal-name">${p.nombre||''}</div>
       <p class="modal-desc">${p.descripcion||''}</p>
       <div class="modal-attrs">
-        <div class="attr"><div class="attr-l">Talles</div><div class="attr-v">${talles.join(', ')||'—'}</div></div>
-        <div class="attr"><div class="attr-l">Colores</div><div class="attr-v">${colores.join(', ')||'—'}</div></div>
+        ${talles.length?`<div class="attr"><div class="attr-l">Talles</div><div class="attr-v">${talles.join(', ')}</div></div>`:''}
+        ${colores.length?`<div class="attr"><div class="attr-l">Colores</div><div class="attr-v">${colores.join(', ')}</div></div>`:''}
       </div>
       <div class="modal-price">${precioHTML(p,'modal-price-old','modal-price-main')}</div>
       ${cuotasTexto(p)?`<div class="modal-cuotas">${cuotasTexto(p)}</div>`:''}
