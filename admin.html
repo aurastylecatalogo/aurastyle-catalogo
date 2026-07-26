@@ -103,6 +103,7 @@ input:checked+.tslide:before{transform:translateX(16px)}
       <button class="btn btn-ghost btn-sm" onclick="window.location='catalogo.html'">← Catálogo</button>
       <button class="btn btn-ghost btn-sm" onclick="toggleBanners()">🖼 Banners</button>
       <button class="btn btn-ghost btn-sm" onclick="toggleOrdenRubros()">↕ Orden de rubros</button>
+      <button class="btn btn-ghost btn-sm" onclick="toggleRenameCard()">🔤 Renombrar categorías</button>
       <button class="btn btn-solid btn-sm" onclick="toggleForm()">+ Nuevo producto</button>
     </div>
   </div>
@@ -154,6 +155,39 @@ input:checked+.tslide:before{transform:translateX(16px)}
     <div style="display:flex;gap:10px;margin-top:14px">
       <button class="btn btn-ghost" onclick="toggleOrdenRubros()">Cerrar</button>
       <button class="btn btn-solid" id="btn-guardar-orden" onclick="guardarOrdenRubros()">Guardar orden</button>
+    </div>
+  </div>
+
+  <!-- RENOMBRAR / ELIMINAR RUBRO O SUBRUBRO -->
+  <div class="form-card" id="rename-card" style="display:none">
+    <h2>Renombrar o eliminar rubro/subrubro</h2>
+    <p class="hint" style="margin-bottom:14px">Cambiá el nombre de un rubro o subrubro que ya existe: se actualizan automáticamente todos los productos que lo usan, sin dejar duplicados. Para eliminar uno, primero tiene que quedar sin productos (renombralos o reasignalos).</p>
+    <div class="fr2">
+      <div class="fr">
+        <label>Tipo</label>
+        <select id="ren-tipo" onchange="renPoblarValores()">
+          <option value="rubro">Rubro</option>
+          <option value="subrubro">Subrubro</option>
+        </select>
+      </div>
+      <div class="fr" id="ren-rubro-wrap" style="display:none">
+        <label>Rubro</label>
+        <select id="ren-rubro" onchange="renPoblarValores()"></select>
+      </div>
+    </div>
+    <div class="fr">
+      <label id="ren-valor-label">Rubro a renombrar</label>
+      <select id="ren-valor" onchange="renContarProductos()"></select>
+    </div>
+    <div class="fr">
+      <label>Nuevo nombre</label>
+      <input id="ren-nuevo" placeholder="Escribí el nuevo nombre"/>
+    </div>
+    <p class="hint" id="ren-count"></p>
+    <div style="display:flex;gap:10px;margin-top:4px;flex-wrap:wrap">
+      <button class="btn btn-ghost" onclick="toggleRenameCard()">Cerrar</button>
+      <button class="btn btn-ghost" id="btn-ren-eliminar" style="border-color:#f5c1c1;color:#b03030" onclick="eliminarCategoria()">Eliminar (solo si no tiene productos)</button>
+      <button class="btn btn-solid" onclick="renombrarCategoria()">Renombrar</button>
     </div>
   </div>
 
@@ -213,7 +247,7 @@ input:checked+.tslide:before{transform:translateX(16px)}
         <select id="fcat" onchange="updateSubrubros()">
           <option>Pantalones</option><option>Remeras</option><option>Buzos</option><option>Body</option><option>Calza larga</option>
           <option>Conjuntos</option><option>Jean</option><option>Pijamas</option><option>Camperas</option>
-          <option>Deportivo</option><option>Blazer</option><option>Polleras</option><option>Accesorios</option><option>Camisas y Blusas</option><option>Polleras</option><option>Velas</option>
+          <option>Deportivo</option><option>Blazer</option><option>Polleras</option><option>Accesorios</option><option>Camisas y Blusas</option><option>Polleras</option><option>Velas Aromáticas</option>
         </select>
       </div>
     </div>
@@ -243,7 +277,7 @@ input:checked+.tslide:before{transform:translateX(16px)}
           <option value="">Todos los rubros</option>
           <option>Pantalones</option><option>Remeras</option><option>Buzos</option><option>Body</option>
           <option>Conjuntos</option><option>Jean</option><option>Pijamas</option><option>Camperas</option>
-          <option>Deportivo</option><option>Blazer</option><option>Polleras</option><option>Accesorios</option><option>Camisas y Blusas</option><option>Polleras</option><option>Velas</option>
+          <option>Deportivo</option><option>Blazer</option><option>Polleras</option><option>Accesorios</option><option>Camisas y Blusas</option><option>Polleras</option><option>Velas Aromáticas</option>
         </select>
       </div>
       <div class="fr" style="margin-bottom:0">
@@ -295,7 +329,7 @@ const $=id=>document.getElementById(id);
 let editId=null;
 
 const SUBRUBROS_MAP={
-  'Deportivo':['Top','Conjunto','Calzas Capri','Calza larga lisa','Calza larga rayada','Calza larga oxford','Short','Musculosas','Remeras','Campera','Buzos'],
+  'Deportivo':['Top','Conjunto','Calzas Capri','Calza larga lisa','Calza larga rayada','Calza larga oxford','Short','Calzas Short','Musculosas','Remeras','Campera','Buzos'],
   'Accesorios':['Pañuelos','Bufandones','Cintos'],
 };
 
@@ -664,6 +698,117 @@ async function eliminar(id){
   if(!confirm('¿Eliminar este producto?'))return;
   await db.collection('productos').doc(id).delete();
   cargar();
+}
+
+/* ===== RENOMBRAR / ELIMINAR RUBRO O SUBRUBRO ===== */
+function toggleRenameCard(){
+  const c=$('rename-card');
+  const mostrar=c.style.display==='none';
+  c.style.display=mostrar?'block':'none';
+  if(mostrar){
+    $('ren-tipo').value='rubro';
+    $('ren-nuevo').value='';
+    renPoblarRubros();
+    renPoblarValores();
+  }
+}
+function rubrosExistentes(){
+  return [...new Set((window._prods||[]).map(p=>p.categoria||'').filter(Boolean))]
+    .sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}));
+}
+function renPoblarRubros(){
+  const sel=$('ren-rubro');
+  const valActual=sel.value;
+  sel.innerHTML=rubrosExistentes().map(r=>`<option>${r}</option>`).join('');
+  if(valActual && sel.querySelector(`option[value="${CSS.escape(valActual)}"]`))sel.value=valActual;
+}
+function renPoblarValores(){
+  const tipo=$('ren-tipo').value;
+  const esSub=tipo==='subrubro';
+  $('ren-rubro-wrap').style.display=esSub?'block':'none';
+  $('ren-valor-label').textContent=esSub?'Subrubro a renombrar':'Rubro a renombrar';
+  $('btn-ren-eliminar').style.display=esSub?'inline-block':'none';
+  const sel=$('ren-valor');
+  if(!esSub){
+    sel.innerHTML=rubrosExistentes().map(r=>`<option>${r}</option>`).join('');
+  }else{
+    renPoblarRubros();
+    const rubro=$('ren-rubro').value;
+    const opciones=getSubrubrosDisponibles(rubro);
+    sel.innerHTML=opciones.map(o=>`<option>${o}</option>`).join('');
+  }
+  renContarProductos();
+}
+function renContarProductos(){
+  const tipo=$('ren-tipo').value;
+  const valor=$('ren-valor').value;
+  let n=0;
+  if(!valor){$('ren-count').textContent='';return;}
+  if(tipo==='rubro'){
+    n=(window._prods||[]).filter(p=>(p.categoria||'')===valor).length;
+  }else{
+    const rubro=$('ren-rubro').value;
+    n=(window._prods||[]).filter(p=>(p.categoria||'')===rubro && (p.subrubro||'').trim()===valor).length;
+  }
+  $('ren-count').textContent=n===0
+    ? 'Ningún producto usa este valor actualmente (se puede eliminar).'
+    : n+' producto'+(n===1?'':'s')+' usa'+(n===1?'':'n')+' este valor.';
+}
+function renProductosCoincidentes(){
+  const tipo=$('ren-tipo').value;
+  const valor=$('ren-valor').value;
+  if(tipo==='rubro'){
+    return (window._prods||[]).filter(p=>(p.categoria||'')===valor);
+  }
+  const rubro=$('ren-rubro').value;
+  return (window._prods||[]).filter(p=>(p.categoria||'')===rubro && (p.subrubro||'').trim()===valor);
+}
+async function renombrarCategoria(){
+  const tipo=$('ren-tipo').value;
+  const valorViejo=$('ren-valor').value;
+  const valorNuevo=$('ren-nuevo').value.trim();
+  if(!valorViejo){alert('Elegí qué renombrar.');return;}
+  if(!valorNuevo){alert('Escribí el nuevo nombre.');return;}
+  if(valorNuevo===valorViejo){alert('El nuevo nombre es igual al actual.');return;}
+  const prods=renProductosCoincidentes();
+  if(!confirm(`¿Renombrar "${valorViejo}" a "${valorNuevo}"?\nSe van a actualizar ${prods.length} producto(s).`))return;
+  if(prods.length){
+    const batch=db.batch();
+    prods.forEach(p=>{
+      const ref=db.collection('productos').doc(p.id);
+      if(tipo==='rubro')batch.update(ref,{categoria:valorNuevo});
+      else batch.update(ref,{subrubro:valorNuevo});
+    });
+    await batch.commit();
+  }
+  if(tipo==='subrubro'){
+    const rubro=$('ren-rubro').value;
+    if(SUBRUBROS_MAP[rubro]){
+      const i=SUBRUBROS_MAP[rubro].indexOf(valorViejo);
+      if(i>-1)SUBRUBROS_MAP[rubro][i]=valorNuevo;
+    }
+  }
+  alert('Listo, se renombró correctamente.');
+  $('ren-nuevo').value='';
+  await cargar();
+  renPoblarValores();
+}
+function eliminarCategoria(){
+  const tipo=$('ren-tipo').value;
+  const valor=$('ren-valor').value;
+  if(!valor){alert('Elegí qué eliminar.');return;}
+  const n=renProductosCoincidentes().length;
+  if(n>0){alert('No se puede eliminar: todavía hay '+n+' producto(s) usando este valor. Primero renombralos o reasignalos a otro subrubro.');return;}
+  if(!confirm(`¿Eliminar "${valor}" de la lista? No hay productos usándolo, así que no afecta el catálogo.`))return;
+  if(tipo==='subrubro'){
+    const rubro=$('ren-rubro').value;
+    if(SUBRUBROS_MAP[rubro]){
+      const i=SUBRUBROS_MAP[rubro].indexOf(valor);
+      if(i>-1)SUBRUBROS_MAP[rubro].splice(i,1);
+    }
+  }
+  alert('Eliminado.');
+  renPoblarValores();
 }
 </script>
 </body>
