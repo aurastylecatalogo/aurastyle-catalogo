@@ -728,11 +728,11 @@ function renPoblarValores(){
   $('ren-rubro-wrap').style.display=esSub?'block':'none';
   $('ren-valor-label').textContent=esSub?'Subrubro a renombrar':'Rubro a renombrar';
   $('btn-ren-eliminar').style.display=esSub?'inline-block':'none';
+  if(esSub && !$('ren-rubro').options.length)renPoblarRubros();
   const sel=$('ren-valor');
   if(!esSub){
     sel.innerHTML=rubrosExistentes().map(r=>`<option>${r}</option>`).join('');
   }else{
-    renPoblarRubros();
     const rubro=$('ren-rubro').value;
     const opciones=getSubrubrosDisponibles(rubro);
     sel.innerHTML=opciones.map(o=>`<option>${o}</option>`).join('');
