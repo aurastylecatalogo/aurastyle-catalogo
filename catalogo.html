@@ -208,6 +208,10 @@ nav{
 .modal-cuotas{font-family:'Lato',sans-serif;font-size:17px;font-weight:400;color:var(--brand);letter-spacing:.2px;margin-top:-8px;margin-bottom:4px;display:block}
 .modal-transf{font-family:'Lato',sans-serif;font-size:16px;font-weight:600;color:#2a1a10;letter-spacing:.2px;margin-bottom:16px;display:block}
 .transf-off{font-size:.8em;font-weight:700;background:#2a1a10;color:#fff;border-radius:8px;padding:1px 7px;margin-left:5px;vertical-align:middle}
+.promo-cant{display:flex;flex-wrap:wrap;gap:5px;margin-top:2px}
+.promo-cant-chip{font-family:'Lato',sans-serif;font-size:11px;background:var(--bg);color:#2a1a10;border-radius:12px;padding:3px 9px;white-space:nowrap}
+.modal-promo-cant{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.modal-promo-cant .promo-cant-chip{font-size:13px;padding:4px 11px}
 .price-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
 .price-off{font-size:10px;font-weight:700;letter-spacing:.5px;background:var(--brand);color:#fff;border-radius:10px;padding:2px 7px;font-family:'Lato',sans-serif}
 .btn-ws{
@@ -715,6 +719,7 @@ function renderGrid(){
           ${precioHTML(p,'card-price-old','card-price')}
           ${cuotasTexto(p)?`<span class="card-cuotas">${cuotasTexto(p)}</span>`:''}
           ${transferenciaHTML(p)?`<span class="card-transf">${transferenciaHTML(p)}</span>`:''}
+          ${promoCantHTML(p,'promo-cant')}
         </div>
         <button class="btn-ws" onclick="event.stopPropagation();sendWS('${p.id}')">${wsico()} Consultar</button>
       </div>
@@ -784,6 +789,7 @@ function openModal(id){
       <div class="modal-price">${precioHTML(p,'modal-price-old','modal-price-main')}</div>
       ${cuotasTexto(p)?`<div class="modal-cuotas">${cuotasTexto(p)}</div>`:''}
       ${transferenciaHTML(p)?`<div class="modal-transf">${transferenciaHTML(p)}</div>`:''}
+      ${promoCantHTML(p,'modal-promo-cant')}
       <button class="modal-ws" onclick="sendWS('${p.id}')">${wsico()} Consultar por WhatsApp</button>
     </div>`;
   document.getElementById('modal-ov').classList.add('open');
@@ -838,6 +844,11 @@ function transferenciaHTML(p){
     offHTML=`<span class="transf-off">-${off}%</span>`;
   }
   return `Transf./Efvo: ${fmtPrecio(val)} ${offHTML}`;
+}
+function promoCantHTML(p,claseWrap){
+  if(!p.promoPorCantidad || !Array.isArray(p.preciosPorCantidad) || !p.preciosPorCantidad.length) return '';
+  const tramos=[...p.preciosPorCantidad].sort((a,b)=>a.cantidad-b.cantidad);
+  return `<div class="${claseWrap}">${tramos.map(t=>`<span class="promo-cant-chip">${t.cantidad} ${t.cantidad==1?'unidad':'unidades'} ${fmtPrecio(t.precio)}</span>`).join('')}</div>`;
 }
 function cuotasTexto(p){
   if(!p.cuotasHabilitado || !p.cuotasCantidad || !p.precio) return '';
