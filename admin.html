@@ -251,7 +251,7 @@ input:checked+.tslide:before{transform:translateX(16px)}
       <label>Precio por cantidad</label>
       <div id="promocant-rows"></div>
       <button type="button" class="btn btn-ghost btn-sm" onclick="agregarTramoPromo()" style="margin-top:4px">+ Agregar tramo</button>
-      <p class="hint">Ej: 1 unidad $15.000 · 2 unidades $27.000 · 3 unidades $36.000. Se muestra como tabla en el catálogo.</p>
+      <p class="hint">La cantidad 1 usa el "Precio ($)" de arriba. Acá cargá desde 2 unidades en adelante. Ej: 2 unidades $27.000 · 3 unidades $36.000.</p>
     </div>
     <div class="fr2">
       <div class="fr"><label>Orden en catálogo</label><input id="forden" type="number" placeholder="1" min="1"/></div>
@@ -545,7 +545,7 @@ let tramosPromo=[];
 function togglePromoCant(){
   $('fpromocant-wrap').style.display=$('fpromocant').checked?'block':'none';
   if($('fpromocant').checked && tramosPromo.length===0){
-    tramosPromo=[{cantidad:1,precio:0},{cantidad:2,precio:0}];
+    tramosPromo=[{cantidad:2,precio:0},{cantidad:3,precio:0}];
   }
   renderTramosPromo();
 }
@@ -554,7 +554,7 @@ function renderTramosPromo(){
   if(!cont)return;
   cont.innerHTML=tramosPromo.map((t,i)=>`
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-      <input type="number" min="1" value="${t.cantidad}" placeholder="Cant." style="width:70px;padding:9px 10px;border:1px solid var(--border);font-size:13px;font-family:'Lato',sans-serif;color:var(--brand);background:#fff;border-radius:4px" oninput="tramosPromo[${i}].cantidad=parseInt(this.value)||1"/>
+      <input type="number" min="2" value="${t.cantidad}" placeholder="Cant." style="width:70px;padding:9px 10px;border:1px solid var(--border);font-size:13px;font-family:'Lato',sans-serif;color:var(--brand);background:#fff;border-radius:4px" oninput="tramosPromo[${i}].cantidad=parseInt(this.value)||2"/>
       <span style="font-size:12px;color:var(--muted);white-space:nowrap">unid. →</span>
       <input type="number" min="0" value="${t.precio}" placeholder="Precio" style="flex:1;padding:9px 12px;border:1px solid var(--border);font-size:13px;font-family:'Lato',sans-serif;color:var(--brand);background:#fff;border-radius:4px" oninput="tramosPromo[${i}].precio=parseFloat(this.value)||0"/>
       <button type="button" class="abtn abtn-del" onclick="quitarTramoPromo(${i})">✕</button>
@@ -562,8 +562,8 @@ function renderTramosPromo(){
   `).join('');
 }
 function agregarTramoPromo(){
-  const ultima=tramosPromo.length?tramosPromo[tramosPromo.length-1].cantidad:0;
-  tramosPromo.push({cantidad:ultima+1,precio:0});
+  const ultima=tramosPromo.length?tramosPromo[tramosPromo.length-1].cantidad:1;
+  tramosPromo.push({cantidad:Math.max(2,ultima+1),precio:0});
   renderTramosPromo();
 }
 function quitarTramoPromo(i){
@@ -614,7 +614,7 @@ async function guardar(){
       cuotasCantidad:$('fcuotas').checked?parseInt($('fcuotasN').value):0,
       precioTransferencia:$('fcuotas').checked?(parseFloat($('fpreciotransf').value)||0):0,
       promoPorCantidad:$('fpromocant').checked,
-      preciosPorCantidad:$('fpromocant').checked?tramosPromo.filter(t=>t.cantidad>0 && t.precio>0):[],
+      preciosPorCantidad:$('fpromocant').checked?tramosPromo.filter(t=>t.cantidad>1 && t.precio>0):[],
       orden:parseInt($('forden').value)||99,
       categoria:$('fcat').value,
       subrubro:subrubroVal,
@@ -727,7 +727,7 @@ function editar(id){
   $('fpreciotransf').value=p.precioTransferencia||'';
   toggleCuotas();
   $('fpromocant').checked=!!p.promoPorCantidad;
-  tramosPromo=(p.preciosPorCantidad&&p.preciosPorCantidad.length)?p.preciosPorCantidad.map(t=>({cantidad:t.cantidad,precio:t.precio})):[];
+  tramosPromo=(p.preciosPorCantidad&&p.preciosPorCantidad.length)?p.preciosPorCantidad.filter(t=>t.cantidad>1).map(t=>({cantidad:t.cantidad,precio:t.precio})):[];
   togglePromoCant();
   $('fcat').value=p.categoria||'Pantalones';
   updateSubrubros(p.subrubro||'');
