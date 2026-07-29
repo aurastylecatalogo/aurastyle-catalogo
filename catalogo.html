@@ -675,12 +675,14 @@ function setBusqueda(v){
 }
 
 function ordenarProductosGrid(lista){
-  let catsOrden=ordenarConPrioridad([...new Set(productos.map(p=>p.categoria||'Otros'))],ordenManualRubros);
-  catsOrden=conNovedadesArriba(catsOrden,nuevosRubros);
+  // NOTA: acá NO se aplican las novedades ("Nuevo") a propósito — esa etiqueta y el
+  // "subir arriba de todo" son solo para el menú desplegable (ver renderCats/
+  // renderSubsPanel). El orden de la grilla de "Todos" sigue el orden manual de
+  // rubros/subrubros de siempre, sin verse afectado por las marcas de novedad.
+  const catsOrden=ordenarConPrioridad([...new Set(productos.map(p=>p.categoria||'Otros'))],ordenManualRubros);
   const subsOrdenPorCat={};
   catsOrden.forEach(c=>{
-    let subs=ordenarConPrioridad([...new Set(productos.filter(p=>(p.categoria||'Otros')===c && p.subrubro).map(p=>p.subrubro.trim()))],subOrdenGuardado[c]||[]);
-    subsOrdenPorCat[c]=conNovedadesArriba(subs,nuevosSub[c]||[]);
+    subsOrdenPorCat[c]=ordenarConPrioridad([...new Set(productos.filter(p=>(p.categoria||'Otros')===c && p.subrubro).map(p=>p.subrubro.trim()))],subOrdenGuardado[c]||[]);
   });
   return lista.slice().sort((a,b)=>{
     const ca=a.categoria||'Otros', cb=b.categoria||'Otros';
