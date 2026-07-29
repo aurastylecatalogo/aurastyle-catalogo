@@ -251,6 +251,10 @@ nav{
 .modal-price-main{font-family:'Lato',sans-serif;font-size:16px;font-weight:700;color:var(--text)}
 .modal-price-old{font-family:'Lato',sans-serif;font-size:17px;color:var(--muted);text-decoration:line-through;margin-left:8px}
 .modal-ws{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;background:var(--brand);color:#fff;border:none;border-radius:4px;font-size:13px;cursor:pointer;font-family:'Cormorant Garamond',serif;transition:background .15s}
+#inapp-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:var(--ink,#3B2416);color:#fff;font-family:'Lato',sans-serif;font-size:12.5px;line-height:1.4;position:relative;z-index:999}
+#inapp-banner strong{color:var(--gold,#C9A87C)}
+#inapp-banner-close{background:none;border:none;color:#fff;font-size:16px;cursor:pointer;flex-shrink:0;padding:0 4px;opacity:.8}
+#inapp-banner-close:hover{opacity:1}
 .modal-ws svg{position:relative;top:1px}
 .modal-ws:hover{background:var(--brand2)}
 
@@ -322,6 +326,12 @@ footer a:hover{opacity:1}
 </style>
 </head>
 <body>
+
+<!-- AVISO NAVEGADOR IN-APP (Instagram/Facebook) -->
+<div id="inapp-banner" style="display:none">
+  <span id="inapp-banner-text">Para una mejor experiencia, abrí este catálogo en tu navegador ⋅ tocá <strong>••• → Abrir en el navegador</strong></span>
+  <button id="inapp-banner-close" aria-label="Cerrar">✕</button>
+</div>
 
 <!-- NAV -->
 <div class="sticky-top">
@@ -647,10 +657,36 @@ function irInicio(){
   setFiltro('Todos');
   window.scrollTo({top:0,behavior:'smooth'});
 }
+function abrirWS(url){
+  if(/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)){
+    sessionStorage.setItem('volvioDeWS','1');
+    location.href = url;
+  }else{
+    window.open(url, '_blank');
+  }
+}
+(function(){
+  const ua=navigator.userAgent||'';
+  const esInApp=/Instagram|FBAN|FBAV/i.test(ua);
+  const volvioDeWS=sessionStorage.getItem('volvioDeWS')==='1';
+  if(!esInApp || !volvioDeWS) return;
+  sessionStorage.removeItem('volvioDeWS');
+  const banner=document.getElementById('inapp-banner');
+  if(!banner) return;
+  const esIOS=/iPhone|iPad|iPod/i.test(ua);
+  const texto=document.getElementById('inapp-banner-text');
+  texto.innerHTML = esIOS
+    ? 'Para que WhatsApp funcione mejor, tocá <strong>••• (arriba a la derecha) → Abrir en Safari</strong>'
+    : 'Para que WhatsApp funcione mejor, tocá <strong>⋮ (arriba a la derecha) → Abrir en Chrome</strong>';
+  banner.style.display='flex';
+  document.getElementById('inapp-banner-close').addEventListener('click',()=>{
+    banner.style.display='none';
+  });
+})();
 function irContacto(){
   if(typeof fbq!=='undefined')fbq('track','Contact');
   const msg=encodeURIComponent(`Hola AURA Style! ✨\nQuería hacerte una consulta.`);
-  window.open(`https://wa.me/${WS}?text=${msg}`, '_blank');
+  abrirWS(`https://wa.me/${WS}?text=${msg}`);
 }
 
 function setFiltro(c){
@@ -840,7 +876,7 @@ function closeModal(){document.getElementById('modal-ov').classList.remove('open
 function sendBannerWS(){
   if(typeof fbq!=='undefined')fbq('track','Contact');
   const msg=encodeURIComponent(`Hola AURA Style! ✨\nVi la promo del catálogo y quiero más info.`);
-  window.open(`https://wa.me/${WS}?text=${msg}`, '_blank');
+  abrirWS(`https://wa.me/${WS}?text=${msg}`);
 }
 
 function sendWS(id){
@@ -852,7 +888,7 @@ Me interesa:
 *${p.nombre}* (${p.modelo||''})
 ${precio}
 ¿Me podés dar más info?`);
-  window.open(`https://wa.me/${WS}?text=${msg}`, '_blank');
+  abrirWS(`https://wa.me/${WS}?text=${msg}`);
 }
 
 function fmtPrecio(p){return '$'+Number(p).toLocaleString('es-AR');}
@@ -906,7 +942,7 @@ function shareProduct(id){
   if(navigator.share){
     navigator.share({title:p.nombre,text:texto,url:link}).catch(()=>{});
   }else{
-    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
+    abrirWS(`https://wa.me/?text=${encodeURIComponent(texto)}`);
   }
 }
 
