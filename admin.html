@@ -63,6 +63,8 @@ body{background:var(--bg);color:var(--brand);font-family:'Lato',sans-serif;font-
 .orden-item button{width:28px;height:28px;border:1px solid var(--border);background:#fff;border-radius:4px;cursor:pointer;font-size:13px;color:var(--brand)}
 .orden-item button:disabled{opacity:.3;cursor:default}
 .orden-item button:not(:disabled):hover{background:var(--bg)}
+.orden-item button.btn-nuevo-on{background:#B06338;color:#fff;border-color:#B06338;width:auto;padding:0 10px}
+.orden-item button[title]{width:auto;padding:0 10px;font-size:12px}
 .tog-wrap{display:flex;align-items:center;gap:7px;margin-left:auto}
 .tog-label{font-size:10px;color:var(--muted);letter-spacing:1px}
 .tog{position:relative;display:inline-block;width:36px;height:20px}
@@ -141,7 +143,7 @@ input:checked+.tslide:before{transform:translateX(16px)}
   <!-- ORDEN DE RUBROS Y SUBRUBROS -->
   <div class="form-card" id="orden-card" style="display:none">
     <h2>Orden de rubros en el catálogo</h2>
-    <p class="hint" style="margin-bottom:14px">Este orden define en qué secuencia aparecen los productos agrupados cuando alguien mira "Todos" en el catálogo (el menú desplegable siempre se muestra alfabético, esto no lo afecta). Usá las flechas para mover un rubro hacia arriba o abajo. Si aparece un rubro nuevo que todavía no ordenaste, se agrega solo al final (por orden alfabético) hasta que lo acomodes.</p>
+    <p class="hint" style="margin-bottom:14px">Este orden define en qué secuencia aparecen los productos agrupados cuando alguien mira "Todos" en el catálogo (el menú desplegable siempre se muestra alfabético, esto no lo afecta). Usá las flechas para mover un rubro hacia arriba o abajo. Si aparece un rubro nuevo que todavía no ordenaste, se agrega solo al final (por orden alfabético) hasta que lo acomodes. Con el botón "☆ Nuevo" marcás un rubro o subrubro como novedad: le agrega la etiqueta "Nuevo" y lo sube arriba de todo, tanto en el menú desplegable como en la grilla, sin necesidad de moverlo a mano.</p>
     <div id="orden-lista"></div>
 
     <h2 style="margin-top:26px">Orden de subrubros</h2>
@@ -430,8 +432,12 @@ async function guardarBanners(){
   btn.disabled=false;btn.textContent='Guardar banners';
 }
 
+function esc(s){return String(s).replace(/'/g,"\\'");}
+
 let ordenRubrosActual=[];
 let subOrdenActual={}; // {Rubro: [subrubro1, subrubro2, ...]}
+let nuevosRubrosActual=new Set();
+let nuevosSubActual={}; // {Rubro: Set(subrubro1, subrubro2, ...)}
 
 function toggleOrdenRubros(){
   const oc=$('orden-card');
@@ -449,6 +455,9 @@ async function cargarOrdenRubros(){
     const d=doc.exists?doc.data():{};
     const guardado=d.orden||[];
     subOrdenActual=d.subOrden||{};
+    nuevosRubrosActual=new Set(d.nuevos||[]);
+    nuevosSubActual={};
+    Object.entries(d.nuevosSub||{}).forEach(([rubro,lista])=>{nuevosSubActual[rubro]=new Set(lista);});
     // rubros que existen hoy en los productos, aunque todavía no se hayan ordenado
     const usados=[...new Set((window._prods||[]).map(p=>p.categoria).filter(Boolean))];
     const nuevos=usados.filter(c=>!guardado.includes(c)).sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}));
@@ -461,21 +470,31 @@ async function cargarOrdenRubros(){
 function renderOrdenRubros(){
   const cont=$('orden-lista');
   if(!ordenRubrosActual.length){cont.innerHTML='<div class="empty">Todavía no hay rubros cargados.</div>';return;}
-  cont.innerHTML=ordenRubrosActual.map((c,i)=>`
+  cont.innerHTML=ordenRubrosActual.map((c,i)=>{
+    const esNuevo=nuevosRubrosActual.has(c);
+    return `
     <div class="orden-item">
       <span class="orden-num">${i+1}</span>
       <span class="orden-nombre">${c}</span>
       <div class="orden-btns">
+        <button title="Marcar como Nuevo (aparece arriba de todo en el menú)" class="${esNuevo?'btn-nuevo-on':''}" onclick="toggleNuevoRubro('${esc(c)}')">${esNuevo?'★ Nuevo':'☆ Nuevo'}</button>
         <button onclick="moverRubro(${i},-1)" ${i===0?'disabled':''}>↑</button>
         <button onclick="moverRubro(${i},1)" ${i===ordenRubrosActual.length-1?'disabled':''}>↓</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function moverRubro(i,dir){
   const j=i+dir;
   if(j<0||j>=ordenRubrosActual.length)return;
   [ordenRubrosActual[i],ordenRubrosActual[j]]=[ordenRubrosActual[j],ordenRubrosActual[i]];
+  renderOrdenRubros();
+}
+
+function toggleNuevoRubro(c){
+  if(nuevosRubrosActual.has(c)) nuevosRubrosActual.delete(c);
+  else nuevosRubrosActual.add(c);
   renderOrdenRubros();
 }
 
@@ -507,15 +526,20 @@ function renderOrdenSubrubros(){
   const lista=subOrdenActual[rubro]||[];
   const cont=$('orden-sub-lista');
   if(!lista.length){cont.innerHTML='<div class="empty">Este rubro no tiene subrubros.</div>';return;}
-  cont.innerHTML=lista.map((s,i)=>`
+  const nuevosDeRubro=nuevosSubActual[rubro]||new Set();
+  cont.innerHTML=lista.map((s,i)=>{
+    const esNuevo=nuevosDeRubro.has(s);
+    return `
     <div class="orden-item">
       <span class="orden-num">${i+1}</span>
       <span class="orden-nombre">${s}</span>
       <div class="orden-btns">
+        <button title="Marcar como Nuevo (aparece arriba de todo en el menú)" class="${esNuevo?'btn-nuevo-on':''}" onclick="toggleNuevoSubrubro('${esc(s)}')">${esNuevo?'★ Nuevo':'☆ Nuevo'}</button>
         <button onclick="moverSubrubro(${i},-1)" ${i===0?'disabled':''}>↑</button>
         <button onclick="moverSubrubro(${i},1)" ${i===lista.length-1?'disabled':''}>↓</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function moverSubrubro(i,dir){
@@ -527,11 +551,27 @@ function moverSubrubro(i,dir){
   renderOrdenSubrubros();
 }
 
+function toggleNuevoSubrubro(s){
+  const rubro=$('orden-sub-rubro').value;
+  if(!nuevosSubActual[rubro]) nuevosSubActual[rubro]=new Set();
+  const set=nuevosSubActual[rubro];
+  if(set.has(s)) set.delete(s);
+  else set.add(s);
+  renderOrdenSubrubros();
+}
+
 async function guardarOrdenRubros(){
   const btn=$('btn-guardar-orden');
   btn.disabled=true;btn.textContent='Guardando...';
   try{
-    await db.collection('config').doc('categorias').set({orden:ordenRubrosActual,subOrden:subOrdenActual},{merge:true});
+    const nuevosSubParaGuardar={};
+    Object.entries(nuevosSubActual).forEach(([rubro,set])=>{nuevosSubParaGuardar[rubro]=[...set];});
+    await db.collection('config').doc('categorias').set({
+      orden:ordenRubrosActual,
+      subOrden:subOrdenActual,
+      nuevos:[...nuevosRubrosActual],
+      nuevosSub:nuevosSubParaGuardar
+    },{merge:true});
     alert('Orden guardado. Ya se actualizó en el catálogo.');
   }catch(e){console.error(e);alert('Error al guardar: '+e.message);}
   btn.disabled=false;btn.textContent='Guardar orden';

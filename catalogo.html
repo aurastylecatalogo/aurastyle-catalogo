@@ -152,6 +152,11 @@ nav{
 .dropdown-item.active{background:var(--bg2);color:var(--brand)}
 .dropdown-caret{color:var(--muted);font-size:11px}
 .dropdown-item.active .dropdown-caret{color:var(--brand)}
+.dropdown-item-left{display:flex;align-items:center;gap:8px;overflow:hidden}
+.badge-nuevo{
+  font-family:'Lato',sans-serif;font-size:9.5px;font-weight:700;letter-spacing:.4px;
+  color:#fff;background:#B06338;padding:2px 7px;border-radius:8px;flex-shrink:0;
+}
 @media(max-width:480px){
   .dropdown-cats{min-width:130px;max-width:150px}
   .dropdown-subs{min-width:160px;max-width:190px}
@@ -533,12 +538,29 @@ let menuCatActiva=null;
 let ordenManualRubros=[];
 let subOrdenGuardado={};
 
+// NOVEDADES: rubros/subrubros marcados como "Nuevo" desde el admin (config/categorias).
+// Se manejan aparte del orden manual: un rubro/subrubro marcado como novedad se
+// muestra con la etiqueta "Nuevo" y se acomoda arriba de todo, tanto en el menú
+// desplegable como en la grilla de "Todos", sin necesidad de reordenar a mano.
+let nuevosRubros=[];
+let nuevosSub={};
+
+function conNovedadesArriba(lista,nuevosList){
+  if(!nuevosList||!nuevosList.length) return lista;
+  const nuevos=lista.filter(x=>nuevosList.includes(x));
+  const resto=lista.filter(x=>!nuevosList.includes(x));
+  return [...nuevos,...resto];
+}
+
 async function cargarOrdenCategorias(){
   try{
     const doc=await db.collection('config').doc('categorias').get();
     if(doc.exists){
-      ordenManualRubros=doc.data().orden||[];
-      subOrdenGuardado=doc.data().subOrden||{};
+      const d=doc.data();
+      ordenManualRubros=d.orden||[];
+      subOrdenGuardado=d.subOrden||{};
+      nuevosRubros=d.nuevos||[];
+      nuevosSub=d.nuevosSub||{};
     }
   }catch(e){console.error('Error al cargar orden de categorías',e);}
 }
@@ -557,12 +579,14 @@ function ordenarConPrioridad(lista,prioridad){
 }
 
 function renderCats(){
-  const catsOrdenadas=[...new Set(productos.map(p=>p.categoria||'Otros').filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}));
+  let catsOrdenadas=[...new Set(productos.map(p=>p.categoria||'Otros').filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}));
+  catsOrdenadas=conNovedadesArriba(catsOrdenadas,nuevosRubros);
   const cats=['Todos',...catsOrdenadas];
-  catsData=cats.map(c=>({
-    name:c,
-    subs:c==='Todos'?[]:[...new Set(productos.filter(p=>(p.categoria||'Otros')===c && p.subrubro).map(p=>p.subrubro.trim()))].sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}))
-  }));
+  catsData=cats.map(c=>{
+    let subs=c==='Todos'?[]:[...new Set(productos.filter(p=>(p.categoria||'Otros')===c && p.subrubro).map(p=>p.subrubro.trim()))].sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}));
+    subs=conNovedadesArriba(subs,nuevosSub[c]||[]);
+    return{name:c,subs};
+  });
   if(menuCatActiva && !catsData.find(c=>c.name===menuCatActiva && c.subs.length)){
     menuCatActiva=null;
   }
@@ -570,9 +594,10 @@ function renderCats(){
     const tieneSubs=o.subs.length>0;
     const activo=tieneSubs && o.name===menuCatActiva;
     const seleccionado=(!tieneSubs && o.name===filtro);
+    const esNuevo=nuevosRubros.includes(o.name);
     const onclick=tieneSubs?`selectMenuCat('${esc(o.name)}')`:`setFiltro('${esc(o.name)}');closeDropdown()`;
-    return `<div class="dropdown-item${activo?' active':''}${seleccionado?' on':''}" onclick="${onclick}">
-      <span>${o.name}</span>${tieneSubs?'<span class="dropdown-caret">&#10095;</span>':''}
+    return `<div class="dropdown-item${activo?' active':''}${seleccionado?' on':''}" data-name="${esc(o.name)}" onclick="${onclick}">
+      <span class="dropdown-item-left"><span>${o.name}</span>${esNuevo?'<span class="badge-nuevo">Nuevo</span>':''}</span>${tieneSubs?'<span class="dropdown-caret">&#10095;</span>':''}
     </div>`;
   }).join('');
   renderSubsPanel();
@@ -584,8 +609,9 @@ function renderSubsPanel(){
   const cat=catsData.find(c=>c.name===menuCatActiva);
   if(!cat){cont.innerHTML='';cont.style.display='none';return;}
   cont.style.display='flex';
+  const nuevosDeCat=nuevosSub[cat.name]||[];
   let html=`<div class="dropdown-item${(filtro===cat.name&&subFiltro==='Todos')?' on':''}" onclick="setFiltro('${esc(cat.name)}');setSubFiltro('Todos');closeDropdown()"><span>Ver todo</span></div>`;
-  html+=cat.subs.map(s=>`<div class="dropdown-item${(filtro===cat.name&&s===subFiltro)?' on':''}" onclick="setFiltro('${esc(cat.name)}');setSubFiltro('${esc(s)}');closeDropdown()"><span>${s}</span></div>`).join('');
+  html+=cat.subs.map(s=>`<div class="dropdown-item${(filtro===cat.name&&s===subFiltro)?' on':''}" onclick="setFiltro('${esc(cat.name)}');setSubFiltro('${esc(s)}');closeDropdown()"><span class="dropdown-item-left"><span>${s}</span>${nuevosDeCat.includes(s)?'<span class="badge-nuevo">Nuevo</span>':''}</span></div>`).join('');
   cont.innerHTML=html;
 }
 
@@ -597,7 +623,7 @@ function selectMenuCat(name){
 
 function renderCatsHighlight(){
   document.querySelectorAll('#dropdown-cats .dropdown-item').forEach(el=>{
-    const nombre=el.querySelector('span')?.textContent;
+    const nombre=el.getAttribute('data-name');
     const cat=catsData.find(c=>c.name===nombre);
     el.classList.toggle('active', !!(cat && cat.subs.length && cat.name===menuCatActiva));
   });
@@ -649,10 +675,12 @@ function setBusqueda(v){
 }
 
 function ordenarProductosGrid(lista){
-  const catsOrden=ordenarConPrioridad([...new Set(productos.map(p=>p.categoria||'Otros'))],ordenManualRubros);
+  let catsOrden=ordenarConPrioridad([...new Set(productos.map(p=>p.categoria||'Otros'))],ordenManualRubros);
+  catsOrden=conNovedadesArriba(catsOrden,nuevosRubros);
   const subsOrdenPorCat={};
   catsOrden.forEach(c=>{
-    subsOrdenPorCat[c]=ordenarConPrioridad([...new Set(productos.filter(p=>(p.categoria||'Otros')===c && p.subrubro).map(p=>p.subrubro.trim()))],subOrdenGuardado[c]||[]);
+    let subs=ordenarConPrioridad([...new Set(productos.filter(p=>(p.categoria||'Otros')===c && p.subrubro).map(p=>p.subrubro.trim()))],subOrdenGuardado[c]||[]);
+    subsOrdenPorCat[c]=conNovedadesArriba(subs,nuevosSub[c]||[]);
   });
   return lista.slice().sort((a,b)=>{
     const ca=a.categoria||'Otros', cb=b.categoria||'Otros';
