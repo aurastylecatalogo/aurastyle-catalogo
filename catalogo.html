@@ -650,7 +650,7 @@ function irInicio(){
 function irContacto(){
   if(typeof fbq!=='undefined')fbq('track','Contact');
   const msg=encodeURIComponent(`Hola AURA Style! ✨\nQuería hacerte una consulta.`);
-  window.open(`https://wa.me/${WS}?text=${msg}`,'_blank');
+  location.href = `https://wa.me/${WS}?text=${msg}`;
 }
 
 function setFiltro(c){
@@ -840,7 +840,7 @@ function closeModal(){document.getElementById('modal-ov').classList.remove('open
 function sendBannerWS(){
   if(typeof fbq!=='undefined')fbq('track','Contact');
   const msg=encodeURIComponent(`Hola AURA Style! ✨\nVi la promo del catálogo y quiero más info.`);
-  window.open(`https://wa.me/${WS}?text=${msg}`,'_blank');
+  location.href = `https://wa.me/${WS}?text=${msg}`;
 }
 
 function sendWS(id){
@@ -852,7 +852,7 @@ Me interesa:
 *${p.nombre}* (${p.modelo||''})
 ${precio}
 ¿Me podés dar más info?`);
-  window.open(`https://wa.me/${WS}?text=${msg}`,'_blank');
+  location.href = `https://wa.me/${WS}?text=${msg}`;
 }
 
 function fmtPrecio(p){return '$'+Number(p).toLocaleString('es-AR');}
@@ -906,7 +906,7 @@ function shareProduct(id){
   if(navigator.share){
     navigator.share({title:p.nombre,text:texto,url:link}).catch(()=>{});
   }else{
-    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`,'_blank');
+    location.href = `https://wa.me/?text=${encodeURIComponent(texto)}`;
   }
 }
 
